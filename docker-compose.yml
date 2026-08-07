@@ -1,0 +1,7 @@
+version: "3.9"
+
+# Faz 1: iskelet asamasi, henuz servis tanimlari yok.
+# Servisler Faz 6-7'de eklenecek (search, cart, payment, inventory)
+# ve Faz 7'de bu dosya infra/docker-compose.yml altina tasinacak.
+
+services: {}
