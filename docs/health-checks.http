@@ -1,0 +1,11 @@
+### Search Service health check
+GET http://localhost:8081/health
+
+### Cart Service health check
+GET http://localhost:8082/health
+
+### Payment Service health check
+GET http://localhost:8083/health
+
+### Inventory Service health check
+GET http://localhost:8084/health
