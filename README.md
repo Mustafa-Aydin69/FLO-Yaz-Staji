@@ -103,6 +103,17 @@ Tüm servisler ayağa kalktıktan sonra:
 
 Projenin 20 günlük, gün gün ilerleyen detaylı faz planı için [`FAZLAR.md`](FAZLAR.md) dosyasına bakın.
 
+### Gün 1 Durumu — Proje İskeleti ve Repo Kurulumu
+
+- Git reposu kuruldu, `.gitignore` eklendi
+- `services/` altında 4 servis için Spring Boot (Java 21, Maven) iskeleti oluşturuldu: search-service, cart-service, payment-service, inventory-service
+- Root `pom.xml` üzerinden ortak bağımlılık yönetimi (Spring Boot BOM) sağlandı
+- Kök dizinde boş `docker-compose.yml` iskeleti ve her serviste `Dockerfile` eklendi
+- `.env.example` ile port/URL placeholder'ları tanımlandı
+- Her serviste `/health` endpoint'i eklendi; 4 servis de local'de tek tek ayağa kaldırılıp curl ile doğrulandı (search:8081, cart:8082, payment:8083, inventory:8084)
+- `scripts/run_all.sh` ile tüm servisleri paralel başlatma eklendi
+- `docs/health-checks.http` ile health-check istek koleksiyonu oluşturuldu
+
 ## Sınırlamalar
 
 - Servisler arası veri gerçek bir veritabanı yerine mock/in-memory veri ile simüle edilir
