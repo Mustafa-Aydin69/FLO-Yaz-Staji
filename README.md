@@ -48,7 +48,7 @@ Kampanya dönemlerinde yüksek trafik alan e-ticaret sistemlerinde tek bir sipar
 ## Proje Yapısı
 
 ```
-flo-observability-sim/
+FLO-Yaz-Staji/
 ├── services/
 │   ├── search-service/
 │   ├── cart-service/
@@ -65,8 +65,9 @@ flo-observability-sim/
 ├── docs/
 │   ├── senaryo-darbogaz.md
 │   └── senaryo-kampanya-trafik.md
-├── FAZLAR.md
-└── CLAUDE.md
+└── Mustik/
+    ├── FAZLAR.md
+    └── CLAUDE.md
 ```
 
 ## Kurulum ve Çalıştırma
@@ -79,8 +80,8 @@ flo-observability-sim/
 ### Ayağa kaldırma
 
 ```bash
-git clone https://github.com/Mustafa-Aydin69/flo-observability-sim.git
-cd flo-observability-sim
+git clone https://github.com/Mustafa-Aydin69/FLO-Yaz-Staji.git
+cd FLO-Yaz-Staji
 docker-compose up --build
 ```
 
