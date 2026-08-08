@@ -22,6 +22,9 @@ public class SearchController {
 
     @GetMapping("/search")
     public List<Product> search(@RequestParam String q) {
+        if (q.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Query parameter 'q' must not be blank");
+        }
         String needle = q.toLowerCase();
         return productRepository.findAll().stream()
                 .filter(p -> p.name().toLowerCase().contains(needle)
