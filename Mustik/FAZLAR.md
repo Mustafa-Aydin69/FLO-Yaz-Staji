@@ -7,7 +7,7 @@ Mimari referans: Mock E-Ticaret Servisleri (Search, Cart, Payment, Inventory) �
 
 ---
 
-## FAZ 1 — Gün 1: Proje İskeleti ve Repo Kurulumu
+## FAZ 1 — Gün 1: Proje İskeleti ve Repo Kurulumu ✅ Tamamlandı
 
 1. Git reposu oluştur (`flo-observability-sim`), `.gitignore` ekle (Python/Node standart)
 2. Klasör yapısını oluştur: `services/search`, `services/cart`, `services/payment`, `services/inventory`, `infra/`, `docs/`
