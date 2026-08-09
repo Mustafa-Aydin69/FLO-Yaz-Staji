@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -71,6 +72,25 @@ public class CartController {
         new CartItem(product.id(), product.name(), product.price(), request.quantity()));
     Cart updatedCart =
         new Cart(cart.cartId(), cart.userId(), List.copyOf(updatedItems), cart.createdAt());
+    return cartRepository.save(updatedCart);
+  }
+
+  @DeleteMapping("/cart/{cartId}/items/{productId}")
+  public Cart removeItem(@PathVariable UUID cartId, @PathVariable Long productId) {
+    Cart cart =
+        cartRepository
+            .findById(cartId)
+            .orElseThrow(
+                () ->
+                    new ResponseStatusException(HttpStatus.NOT_FOUND, "Cart not found: " + cartId));
+    boolean present = cart.items().stream().anyMatch(item -> item.productId().equals(productId));
+    if (!present) {
+      throw new ResponseStatusException(
+          HttpStatus.NOT_FOUND, "Item not found in cart: " + productId);
+    }
+    List<CartItem> updatedItems =
+        cart.items().stream().filter(item -> !item.productId().equals(productId)).toList();
+    Cart updatedCart = new Cart(cart.cartId(), cart.userId(), updatedItems, cart.createdAt());
     return cartRepository.save(updatedCart);
   }
 }
