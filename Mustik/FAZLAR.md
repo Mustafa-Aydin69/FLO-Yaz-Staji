@@ -26,7 +26,7 @@ Mimari referans: Mock E-Ticaret Servisleri (Search, Cart, Payment, Inventory) �
 
 ---
 
-## FAZ 2 — Gün 2: Search Service Temel Mantığı
+## FAZ 2 — Gün 2: Search Service Temel Mantığı ✅ Tamamlandı
 
 1. Search Service için basit bir ürün kataloğu (mock JSON veri, 20-30 ayakkabı kaydı) oluştur
 2. `GET /search?q=` endpoint'ini yaz — isim/kategori bazlı basit filtreleme
@@ -36,9 +36,9 @@ Mimari referans: Mock E-Ticaret Servisleri (Search, Cart, Payment, Inventory) �
 6. Servisi ayrı bir portta (örn. 8001) çalıştır ve manuel test et
 7. Basit bir logging middleware ekle (istek geldiğinde path + süreyi logla)
 8. `requirements.txt`/`package.json`'a eklenen yeni bağımlılıkları işle
-9. Dockerfile'ı Search Service için tamamla, `docker build` ile image'ı test et
-10. docker-compose.yml içine Search Service'i ekle, `docker-compose up search` ile ayağa kaldır
-11. Container içinden health-check ve search endpoint'ini curl ile doğrula
+9. Dockerfile'ı Search Service için tamamla, `docker build` ile image'ı test et *(Faz 6-7'ye ertelendi)*
+10. docker-compose.yml içine Search Service'i ekle, `docker-compose up search` ile ayağa kaldır *(Faz 6-7'ye ertelendi)*
+11. Container içinden health-check ve search endpoint'ini curl ile doğrula *(Faz 6-7'ye ertelendi)*
 12. Basit unit test(ler) yaz (en az 2-3 test case: bulunan ürün, bulunamayan ürün, boş query)
 13. Kod stilini gözden geçir (linter/formatter varsa çalıştır)
 14. README'ye Search Service API dokümantasyonu ekle
@@ -53,10 +53,10 @@ Mimari referans: Mock E-Ticaret Servisleri (Search, Cart, Payment, Inventory) �
 4. `POST /cart/{cart_id}/items` — sepete ürün ekleme (Search Service'e HTTP isteğiyle ürün doğrulaması)
 5. `GET /cart/{cart_id}` — sepet içeriğini görüntüleme
 6. `DELETE /cart/{cart_id}/items/{item_id}` — üründen çıkarma
-7. Search Service'e yapılan çağrı için basit bir HTTP client wrapper fonksiyonu yaz
+7. Search Service'e yapılan çağrı için basit bir HTTP client wrapper fonksiyonu yaz *(Spring `RestClient` ile)*
 8. Search Service kapalıyken Cart Service'in davranışını test et (hata yönetimi/fallback)
-9. Dockerfile'ı tamamla, docker-compose'a Cart Service'i ekle
-10. İki servisin aynı Docker network'ünde birbirini servis adıyla (örn. `http://search:8001`) çağırabildiğini doğrula
+9. Dockerfile'ı tamamla, docker-compose'a Cart Service'i ekle *(Faz 6-7'ye ertelendi)*
+10. İki servisin aynı Docker network'ünde birbirini servis adıyla (örn. `http://search:8001`) çağırabildiğini doğrula *(Faz 6-7'ye ertelendi)*
 11. Sepet oluşturma → ürün ekleme → görüntüleme akışını uçtan uca manuel test et
 12. Unit testler ekle (en az 3 case: geçerli ekleme, geçersiz ürün id, boş sepet görüntüleme)
 13. Logging middleware'i Cart Service'e de uygula
