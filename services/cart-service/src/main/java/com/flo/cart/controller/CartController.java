@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -36,6 +37,14 @@ public class CartController {
     String userId = request != null ? request.userId() : null;
     Cart cart = new Cart(UUID.randomUUID(), userId, List.of(), Instant.now());
     return cartRepository.save(cart);
+  }
+
+  @GetMapping("/cart/{cartId}")
+  public Cart getCart(@PathVariable UUID cartId) {
+    return cartRepository
+        .findById(cartId)
+        .orElseThrow(
+            () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cart not found: " + cartId));
   }
 
   @PostMapping("/cart/{cartId}/items")
