@@ -94,6 +94,22 @@ Tüm servisler ayağa kalktıktan sonra:
 | Grafana | http://localhost:3000 |
 | Alertmanager | http://localhost:9093 |
 
+## API Dokümantasyonu
+
+### Search Service (`localhost:8081`)
+
+| Method | Endpoint | Açıklama |
+|---|---|---|
+| GET | `/health` | Servis sağlık kontrolü |
+| GET | `/search?q={terim}` | İsim, marka veya kategoriye göre ürün arama (case-insensitive). `q` boş/whitespace ise `400` döner |
+| GET | `/products/{id}` | Tekil ürün detayı. Ürün bulunamazsa `404` döner |
+
+Örnek:
+```bash
+curl "http://localhost:8081/search?q=nike"
+curl "http://localhost:8081/products/1"
+```
+
 ## Örnek Kullanım Senaryoları
 
 1. **Sipariş Darboğazı Tespiti** — Bir isteğin hangi serviste ne kadar zaman harcadığını `trace_id` ile Jaeger üzerinden tespit etme. Detay: [`docs/senaryo-darbogaz.md`](docs/senaryo-darbogaz.md)
@@ -113,6 +129,15 @@ Projenin 20 günlük, gün gün ilerleyen detaylı faz planı için [`FAZLAR.md`
 - Her serviste `/health` endpoint'i eklendi; 4 servis de local'de tek tek ayağa kaldırılıp curl ile doğrulandı (search:8081, cart:8082, payment:8083, inventory:8084)
 - `scripts/run_all.sh` ile tüm servisleri paralel başlatma eklendi
 - `docs/health-checks.http` ile health-check istek koleksiyonu oluşturuldu
+
+### Gün 2 Durumu — Search Service Temel Mantığı
+
+- Mock ürün kataloğu (`products.json`, 25 ayakkabı kaydı) eklendi; `ProductRepository` uygulama açılışında bu veriyi belleğe yüklüyor
+- `GET /search?q=` endpoint'i eklendi — isim/marka/kategori bazlı case-insensitive filtreleme, boş/whitespace `q` için `400` davranışı
+- `GET /products/{id}` endpoint'i eklendi — bulunamayan ürün için `404`
+- İstek loglama filtresi eklendi (`RequestLoggingFilter`): her istekte method + path + status + süre loglanıyor
+- `SearchControllerTest` ile 5 unit test yazıldı, tamamı geçiyor
+- Root `pom.xml`'e Spotless (Google Java Format) formatlama kontrolü eklendi; 4 servisteki mevcut kod da bu standarda göre yeniden biçimlendirildi
 
 ## Sınırlamalar
 
