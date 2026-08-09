@@ -110,6 +110,26 @@ curl "http://localhost:8081/search?q=nike"
 curl "http://localhost:8081/products/1"
 ```
 
+### Cart Service (`localhost:8082`)
+
+Search Service'e bağımlıdır: sepete ürün eklerken `GET /products/{id}` ile ürün doğrulaması yapar (varsayılan `search-service.base-url=http://localhost:8081`). Search Service erişilemezse `502` döner.
+
+| Method | Endpoint | Açıklama |
+|---|---|---|
+| GET | `/health` | Servis sağlık kontrolü |
+| POST | `/cart` | Yeni (boş) sepet oluşturur. Body: `{"userId": "..."}` (opsiyonel) |
+| GET | `/cart/{cartId}` | Sepet içeriğini döner. Sepet bulunamazsa `404` |
+| POST | `/cart/{cartId}/items` | Sepete ürün ekler. Body: `{"productId": 1, "quantity": 2}`. Ürün veya sepet bulunamazsa `404`, `quantity <= 0` ise `400` |
+| DELETE | `/cart/{cartId}/items/{productId}` | Üründen çıkarır. Sepet veya kalem bulunamazsa `404` |
+
+Örnek:
+```bash
+curl -X POST http://localhost:8082/cart -H "Content-Type: application/json" -d '{"userId":"demo"}'
+curl -X POST http://localhost:8082/cart/{cartId}/items -H "Content-Type: application/json" -d '{"productId":1,"quantity":2}'
+curl http://localhost:8082/cart/{cartId}
+curl -X DELETE http://localhost:8082/cart/{cartId}/items/1
+```
+
 ## Örnek Kullanım Senaryoları
 
 1. **Sipariş Darboğazı Tespiti** — Bir isteğin hangi serviste ne kadar zaman harcadığını `trace_id` ile Jaeger üzerinden tespit etme. Detay: [`docs/senaryo-darbogaz.md`](docs/senaryo-darbogaz.md)
@@ -138,6 +158,15 @@ Projenin 20 günlük, gün gün ilerleyen detaylı faz planı için [`FAZLAR.md`
 - İstek loglama filtresi eklendi (`RequestLoggingFilter`): her istekte method + path + status + süre loglanıyor
 - `SearchControllerTest` ile 5 unit test yazıldı, tamamı geçiyor
 - Root `pom.xml`'e Spotless (Google Java Format) formatlama kontrolü eklendi; 4 servisteki mevcut kod da bu standarda göre yeniden biçimlendirildi
+
+### Gün 3 Durumu — Cart Service Temel Mantığı
+
+- `Cart`/`CartItem` veri modelleri ve `ConcurrentHashMap` tabanlı in-memory `CartRepository` eklendi
+- `POST /cart`, `GET /cart/{cartId}`, `POST /cart/{cartId}/items`, `DELETE /cart/{cartId}/items/{productId}` endpoint'leri eklendi
+- Search Service entegrasyonu: `RestClient` tabanlı `SearchServiceClient` ile ürün doğrulaması yapılıyor; ürün bulunamazsa `404`, Search Service'e erişilemezse `502` dönüyor
+- Search Service kapalıyken ve açıkken uçtan uca akışlar (sepet oluştur → ürün ekle → görüntüle) manuel olarak doğrulandı
+- İstek loglama filtresi (`RequestLoggingFilter`) Cart Service'e de uygulandı
+- `CartControllerTest` ile 8 unit test yazıldı, tamamı geçiyor
 
 ## Sınırlamalar
 
