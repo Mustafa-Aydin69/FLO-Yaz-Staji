@@ -22,7 +22,8 @@ public class StockRepository {
     try (InputStream in = new ClassPathResource("stock.json").getInputStream()) {
       List<Stock> seed = objectMapper.readValue(in, new TypeReference<List<Stock>>() {});
       this.stocks =
-          new ConcurrentHashMap<>(seed.stream().collect(Collectors.toMap(Stock::productId, s -> s)));
+          new ConcurrentHashMap<>(
+              seed.stream().collect(Collectors.toMap(Stock::productId, s -> s)));
     }
   }
 

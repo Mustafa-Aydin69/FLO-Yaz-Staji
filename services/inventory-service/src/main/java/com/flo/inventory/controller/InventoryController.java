@@ -26,8 +26,7 @@ public class InventoryController {
   }
 
   @PostMapping("/inventory/{productId}/reserve")
-  public Stock reserve(
-      @PathVariable Long productId, @RequestBody StockAdjustmentRequest request) {
+  public Stock reserve(@PathVariable Long productId, @RequestBody StockAdjustmentRequest request) {
     if (request.quantity() <= 0) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "quantity must be positive");
     }
@@ -44,8 +43,7 @@ public class InventoryController {
   }
 
   @PostMapping("/inventory/{productId}/release")
-  public Stock release(
-      @PathVariable Long productId, @RequestBody StockAdjustmentRequest request) {
+  public Stock release(@PathVariable Long productId, @RequestBody StockAdjustmentRequest request) {
     if (request.quantity() <= 0) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "quantity must be positive");
     }
@@ -60,7 +58,6 @@ public class InventoryController {
         .findById(productId)
         .orElseThrow(
             () ->
-                new ResponseStatusException(
-                    HttpStatus.NOT_FOUND, "Stock not found: " + productId));
+                new ResponseStatusException(HttpStatus.NOT_FOUND, "Stock not found: " + productId));
   }
 }

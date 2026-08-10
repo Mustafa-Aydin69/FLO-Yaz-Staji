@@ -5,4 +5,4 @@ import java.util.List;
 import java.util.UUID;
 
 public record CartDto(
-    UUID cartId, String userId, List<Object> items, double totalAmount, Instant createdAt) {}
+    UUID cartId, String userId, List<CartItemDto> items, double totalAmount, Instant createdAt) {}

@@ -2,6 +2,8 @@ package com.flo.payment.controller;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyDouble;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -10,7 +12,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.flo.payment.client.BankApiClient;
 import com.flo.payment.client.CartDto;
+import com.flo.payment.client.CartItemDto;
 import com.flo.payment.client.CartServiceClient;
+import com.flo.payment.client.InventoryServiceClient;
 import com.flo.payment.model.Payment;
 import com.flo.payment.model.PaymentStatus;
 import com.flo.payment.repository.PaymentRepository;
@@ -34,6 +38,8 @@ class PaymentControllerTest {
 
   @MockBean private CartServiceClient cartServiceClient;
 
+  @MockBean private InventoryServiceClient inventoryServiceClient;
+
   @MockBean private BankApiClient bankApiClient;
 
   private static final UUID CART_ID = UUID.fromString("22222222-2222-2222-2222-222222222222");
@@ -43,9 +49,20 @@ class PaymentControllerTest {
         CART_ID, "test-user", List.of(), totalAmount, Instant.parse("2026-01-01T00:00:00Z"));
   }
 
+  private CartDto cartWithItem(long productId, double price, int quantity) {
+    CartItemDto item = new CartItemDto(productId, "Air Runner X1", price, quantity);
+    return new CartDto(
+        CART_ID,
+        "test-user",
+        List.of(item),
+        price * quantity,
+        Instant.parse("2026-01-01T00:00:00Z"));
+  }
+
   @Test
   void createPayment_returnsCreatedPayment_whenCartIsValid() throws Exception {
-    when(cartServiceClient.findCart(CART_ID)).thenReturn(Optional.of(cartWithTotal(2899.90)));
+    when(cartServiceClient.findCart(CART_ID)).thenReturn(Optional.of(cartWithItem(1L, 2899.90, 1)));
+    when(inventoryServiceClient.reserve(anyLong(), anyInt())).thenReturn(true);
     when(bankApiClient.charge(anyDouble())).thenReturn("txn-123");
     when(paymentRepository.save(any(Payment.class)))
         .thenAnswer(invocation -> invocation.getArgument(0));

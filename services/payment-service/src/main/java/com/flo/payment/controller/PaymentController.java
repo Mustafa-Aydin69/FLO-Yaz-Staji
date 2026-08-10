@@ -2,12 +2,16 @@ package com.flo.payment.controller;
 
 import com.flo.payment.client.BankApiClient;
 import com.flo.payment.client.CartDto;
+import com.flo.payment.client.CartItemDto;
 import com.flo.payment.client.CartServiceClient;
+import com.flo.payment.client.InventoryServiceClient;
 import com.flo.payment.model.CreatePaymentRequest;
 import com.flo.payment.model.Payment;
 import com.flo.payment.model.PaymentStatus;
 import com.flo.payment.repository.PaymentRepository;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,14 +27,17 @@ public class PaymentController {
 
   private final PaymentRepository paymentRepository;
   private final CartServiceClient cartServiceClient;
+  private final InventoryServiceClient inventoryServiceClient;
   private final BankApiClient bankApiClient;
 
   public PaymentController(
       PaymentRepository paymentRepository,
       CartServiceClient cartServiceClient,
+      InventoryServiceClient inventoryServiceClient,
       BankApiClient bankApiClient) {
     this.paymentRepository = paymentRepository;
     this.cartServiceClient = cartServiceClient;
+    this.inventoryServiceClient = inventoryServiceClient;
     this.bankApiClient = bankApiClient;
   }
 
@@ -50,12 +57,39 @@ public class PaymentController {
           HttpStatus.BAD_REQUEST, "Cart total amount must be positive");
     }
 
-    String transactionId = bankApiClient.charge(cart.totalAmount());
+    boolean continueWithAvailable = Boolean.TRUE.equals(request.continueWithAvailable());
+    List<CartItemDto> reserved = new ArrayList<>();
+    List<Long> unavailable = new ArrayList<>();
+    for (CartItemDto item : cart.items()) {
+      if (inventoryServiceClient.reserve(item.productId(), item.quantity())) {
+        reserved.add(item);
+      } else {
+        unavailable.add(item.productId());
+      }
+    }
+
+    if (!unavailable.isEmpty() && !continueWithAvailable) {
+      reserved.forEach(item -> inventoryServiceClient.release(item.productId(), item.quantity()));
+      throw new ResponseStatusException(
+          HttpStatus.CONFLICT, "Insufficient stock for products: " + unavailable);
+    }
+
+    double amount =
+        continueWithAvailable
+            ? reserved.stream().mapToDouble(item -> item.price() * item.quantity()).sum()
+            : cart.totalAmount();
+
+    if (amount <= 0) {
+      reserved.forEach(item -> inventoryServiceClient.release(item.productId(), item.quantity()));
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No items available to charge");
+    }
+
+    String transactionId = bankApiClient.charge(amount);
     Payment payment =
         new Payment(
             UUID.randomUUID(),
             cart.cartId(),
-            cart.totalAmount(),
+            amount,
             PaymentStatus.SUCCESS,
             transactionId,
             Instant.now());
