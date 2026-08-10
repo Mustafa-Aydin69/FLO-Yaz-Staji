@@ -9,7 +9,7 @@ Bu dosya, bu repoda çalışırken Claude Code'un uyması gereken kuralları tan
 ### Çalışma akışı
 
 1. Claude, `git add` / `git commit` / `git push` komutlarını **çalıştırmaz**. Kod değişikliklerini yapar, gerekirse test eder, ama commit/push adımını kullanıcıya bırakır.
-2. Bir çalışma birimi (FAZLAR.md'deki tek bir madde) tamamlandığında, Claude şunları içeren bir **commit geri bildirimi** sunar:
+2. Bir çalışma birimi tamamlandığında, Claude şunları içeren bir **commit geri bildirimi** sunar. Çalışma birimi, bir FAZ'ın tamamı değil, o FAZ içindeki **tek bir numaralı alt madde**dir (örn. Faz 5'in "1. Stok veri modelini tasarla" maddesi) — madde tek başına derlenmeyen/çalışmayan küçük bir parça olsa bile, geri bildirim yine de sunulur:
    - Değişikliklerin kısa özeti (ne değişti, neden)
    - Önerilen commit mesajı (sade, teknik, normal bir geliştirici commit'i formatında — örn. `feat: add payment service health check`)
    - Varsa dikkat edilmesi gereken noktalar (örn. `.env`/secret içeren dosyaların stage edilmemesi)
