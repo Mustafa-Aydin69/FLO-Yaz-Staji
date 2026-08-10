@@ -36,7 +36,7 @@ public class CartController {
   @ResponseStatus(HttpStatus.CREATED)
   public Cart createCart(@RequestBody(required = false) CreateCartRequest request) {
     String userId = request != null ? request.userId() : null;
-    Cart cart = new Cart(UUID.randomUUID(), userId, List.of(), Instant.now());
+    Cart cart = new Cart(UUID.randomUUID(), userId, List.of(), 0.0, Instant.now());
     return cartRepository.save(cart);
   }
 
@@ -71,7 +71,12 @@ public class CartController {
     updatedItems.add(
         new CartItem(product.id(), product.name(), product.price(), request.quantity()));
     Cart updatedCart =
-        new Cart(cart.cartId(), cart.userId(), List.copyOf(updatedItems), cart.createdAt());
+        new Cart(
+            cart.cartId(),
+            cart.userId(),
+            List.copyOf(updatedItems),
+            totalAmount(updatedItems),
+            cart.createdAt());
     return cartRepository.save(updatedCart);
   }
 
@@ -90,7 +95,17 @@ public class CartController {
     }
     List<CartItem> updatedItems =
         cart.items().stream().filter(item -> !item.productId().equals(productId)).toList();
-    Cart updatedCart = new Cart(cart.cartId(), cart.userId(), updatedItems, cart.createdAt());
+    Cart updatedCart =
+        new Cart(
+            cart.cartId(),
+            cart.userId(),
+            updatedItems,
+            totalAmount(updatedItems),
+            cart.createdAt());
     return cartRepository.save(updatedCart);
+  }
+
+  private static double totalAmount(List<CartItem> items) {
+    return items.stream().mapToDouble(item -> item.price() * item.quantity()).sum();
   }
 }

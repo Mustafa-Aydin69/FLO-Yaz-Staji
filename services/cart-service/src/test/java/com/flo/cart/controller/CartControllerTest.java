@@ -38,7 +38,7 @@ class CartControllerTest {
       new ProductDto(1L, "Air Runner X1", "Nike", "Spor Ayakkabı", 2899.90, 42);
 
   private Cart emptyCart() {
-    return new Cart(CART_ID, "test-user", List.of(), Instant.parse("2026-01-01T00:00:00Z"));
+    return new Cart(CART_ID, "test-user", List.of(), 0.0, Instant.parse("2026-01-01T00:00:00Z"));
   }
 
   @Test
@@ -116,7 +116,8 @@ class CartControllerTest {
   void removeItem_returnsUpdatedCart_whenItemExists() throws Exception {
     CartItem item = new CartItem(1L, "Air Runner X1", 2899.90, 2);
     Cart cartWithItem =
-        new Cart(CART_ID, "test-user", List.of(item), Instant.parse("2026-01-01T00:00:00Z"));
+        new Cart(
+            CART_ID, "test-user", List.of(item), 5799.80, Instant.parse("2026-01-01T00:00:00Z"));
     when(cartRepository.findById(CART_ID)).thenReturn(Optional.of(cartWithItem));
     when(cartRepository.save(any(Cart.class))).thenAnswer(invocation -> invocation.getArgument(0));
 

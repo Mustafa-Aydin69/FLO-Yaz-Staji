@@ -4,4 +4,5 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
-public record Cart(UUID cartId, String userId, List<CartItem> items, Instant createdAt) {}
+public record Cart(
+    UUID cartId, String userId, List<CartItem> items, double totalAmount, Instant createdAt) {}

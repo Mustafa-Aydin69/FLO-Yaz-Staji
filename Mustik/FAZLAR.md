@@ -45,7 +45,7 @@ Mimari referans: Mock E-Ticaret Servisleri (Search, Cart, Payment, Inventory) �
 
 ---
 
-## FAZ 3 — Gün 3: Cart Service Temel Mantığı
+## FAZ 3 — Gün 3: Cart Service Temel Mantığı ✅ Tamamlandı
 
 1. Sepet veri modelini tasarla (cart_id, user_id, items[], created_at)
 2. In-memory veya basit dict tabanlı bir "sahte veritabanı" katmanı oluştur (ileride Redis'e geçiş için soyutlanmış)
@@ -64,7 +64,7 @@ Mimari referans: Mock E-Ticaret Servisleri (Search, Cart, Payment, Inventory) �
 
 ---
 
-## FAZ 4 — Gün 4: Payment Service Temel Mantığı
+## FAZ 4 — Gün 4: Payment Service Temel Mantığı ✅ Tamamlandı
 
 1. Ödeme veri modelini tasarla (payment_id, cart_id, amount, status, created_at)
 2. `POST /payment` endpoint'i — cart_id alıp Cart Service'ten sepet toplamını çekme
