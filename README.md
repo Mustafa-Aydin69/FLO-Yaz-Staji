@@ -35,6 +35,18 @@ Kampanya dönemlerinde yüksek trafik alan e-ticaret sistemlerinde tek bir sipar
 | **Payment Service** | Ödeme işleme; rastgele %3 hata (HTTP 500 / POS timeout) enjeksiyonu içerir |
 | **Inventory Service** | Stok sorgulama, ödeme sonucuna göre stok düşürme/iade etme |
 
+### Şu Anki Durum (Gün 5)
+
+Yukarıdaki hedef mimari (OTel Collector, Jaeger, Prometheus, Grafana, Alertmanager) henüz kurulmadı — bunlar Faz 8'den itibaren ekleniyor. Şu an çalışan zincir:
+
+```
+[ Search :8081 ] <-- [ Cart :8082 ] <-- [ Payment :8083 ] --> [ Inventory :8084 ]
+      ^                                        |
+      |________________ ürün doğrulaması ______|  (Cart, ürün eklerken Search'e sorar)
+```
+
+**4 servis de çalışır durumda ve uçtan uca bir sipariş akışını (arama → sepet → ödeme → stok rezervasyonu) destekliyor.** Ödeme, sepetteki her ürün için Inventory'den stok rezerve ediyor; stok yetersizse ya tüm işlem geri alınıyor (`409`) ya da (istek üzerine) sadece stoku olan ürünlerden tahsilat yapılıyor. Docker Compose entegrasyonu henüz yok (Faz 6-7'de eklenecek), servisler şu an local'de ayrı ayrı çalıştırılıp manuel test ediliyor.
+
 ## Teknoloji Yığını
 
 - **Servisler:** Java, Spring Boot
@@ -132,12 +144,12 @@ curl -X DELETE http://localhost:8082/cart/{cartId}/items/1
 
 ### Payment Service (`localhost:8083`)
 
-Cart Service'e bağımlıdır: ödeme oluştururken `GET /cart/{cartId}` ile sepetin `totalAmount`'ını çeker (varsayılan `cart-service.base-url=http://localhost:8082`). Cart Service erişilemezse `502` döner. Banka çağrısı `BankApiClient` ile mock'lanır (sabit ~300ms gecikme, şimdilik her zaman başarılı).
+Cart Service'e bağımlıdır: ödeme oluştururken `GET /cart/{cartId}` ile sepet içeriğini ve `totalAmount`'ı çeker (varsayılan `cart-service.base-url=http://localhost:8082`). Cart Service erişilemezse `502` döner. Ayrıca Inventory Service'e bağımlıdır (aşağıya bakın). Banka çağrısı `BankApiClient` ile mock'lanır (sabit ~300ms gecikme, şimdilik her zaman başarılı).
 
 | Method | Endpoint | Açıklama |
 |---|---|---|
 | GET | `/health` | Servis sağlık kontrolü |
-| POST | `/payment` | Sepet için ödeme oluşturur. Body: `{"cartId": "..."}`. Sepet bulunamazsa `404`, sepet tutarı `0` veya negatifse `400` |
+| POST | `/payment` | Sepet için ödeme oluşturur. Body: `{"cartId": "...", "continueWithAvailable": false}` (`continueWithAvailable` opsiyonel). Sepet bulunamazsa `404`, sepet tutarı `0` veya negatifse `400`, stok yetersizse `409` (aşağıya bakın) |
 | GET | `/payment/{paymentId}` | Ödeme durumunu döner. Ödeme bulunamazsa `404` |
 
 Örnek:
@@ -145,6 +157,26 @@ Cart Service'e bağımlıdır: ödeme oluştururken `GET /cart/{cartId}` ile sep
 curl -X POST http://localhost:8083/payment -H "Content-Type: application/json" -d '{"cartId":"{cartId}"}'
 curl http://localhost:8083/payment/{paymentId}
 ```
+
+### Inventory Service (`localhost:8084`)
+
+Başlangıç stok verisi Search Service'in ürün kataloğuyla eşleşecek şekilde tanımlanmıştır (`stock.json`). Payment Service ödeme sırasında bu servisi çağırır.
+
+| Method | Endpoint | Açıklama |
+|---|---|---|
+| GET | `/health` | Servis sağlık kontrolü |
+| GET | `/inventory/{productId}` | Ürünün stok/rezervasyon durumunu döner. Ürün bulunamazsa `404` |
+| POST | `/inventory/{productId}/reserve` | Belirtilen miktarı rezerve eder (`reservedCount` artırılır). Body: `{"quantity": 2}`. Yetersiz stokta `409`, `quantity <= 0` ise `400` |
+| POST | `/inventory/{productId}/release` | Rezervasyonu iade eder (`reservedCount` azaltılır). Body: `{"quantity": 2}`. `quantity <= 0` ise `400` |
+
+Örnek:
+```bash
+curl http://localhost:8084/inventory/1
+curl -X POST http://localhost:8084/inventory/1/reserve -H "Content-Type: application/json" -d '{"quantity":2}'
+curl -X POST http://localhost:8084/inventory/1/release -H "Content-Type: application/json" -d '{"quantity":2}'
+```
+
+**Payment Service'in Inventory entegrasyonu:** `POST /payment` isteği artık sepetteki her ürün için ayrı ayrı rezervasyon deniyor. Herhangi bir ürünün stoku yetersizse, o ana kadar rezerve edilenler otomatik olarak geri alınır (`release`) ve `409 Conflict` döner (all-or-nothing). İstek body'sine opsiyonel `"continueWithAvailable": true` eklenirse, Payment Service sadece stoku olan ürünlerden tahsilat yapar ve tutarı buna göre yeniden hesaplar.
 
 ## Örnek Kullanım Senaryoları
 
@@ -194,6 +226,18 @@ Projenin 20 günlük, gün gün ilerleyen detaylı faz planı için [`FAZLAR.md`
 - Sepet tutarı `0` veya negatifse ödeme `400 Bad Request` ile reddediliyor (banka çağrısı hiç yapılmıyor)
 - İstek loglama filtresi (`RequestLoggingFilter`) Payment Service'e de uygulandı
 - `PaymentControllerTest` ile 5 unit test yazıldı (başarılı ödeme, geçersiz cartId, sıfır tutarlı sepet, ödeme sorgulama — bulundu/bulunamadı), tamamı geçiyor
+
+### Gün 5 Durumu — Inventory Service ve Zincirin Tamamlanması
+
+- `Stock` veri modeli ve `stock.json` (Search Service'in ürün kataloğuyla eşleşen 25 kayıt) eklendi; `StockRepository` açılışta bunu belleğe yüklüyor
+- `GET /inventory/{productId}`, `POST /inventory/{productId}/reserve`, `POST /inventory/{productId}/release` endpoint'leri eklendi; yetersiz stokta `409`, geçersiz miktarda `400`
+- Payment Service, Inventory Service ile entegre edildi: ödeme öncesi sepetteki her ürün için ayrı ayrı rezervasyon deniyor
+- Stok yetersizliğinde varsayılan davranış all-or-nothing: o ana kadar rezerve edilenler geri alınır (`release`), `409` döner; opsiyonel `continueWithAvailable: true` ile sadece stoku olan ürünlerden tahsilat yapılıp tutar yeniden hesaplanıyor
+- İstek loglama filtresi (`RequestLoggingFilter`) Inventory Service'e de uygulandı
+- `InventoryControllerTest` (6 case) ve `PaymentControllerTest`'e eklenen 2 yeni case (stok yetersizliği + kısmi ödeme) ile toplam senaryolar test edildi, tamamı geçiyor
+- Search → Cart → Payment → Inventory tam zinciri 4 servis local'de ayrı ayrı çalıştırılarak uçtan uca manuel doğrulandı (curl ile); ayrıca stok yetersizliği edge case'i (all-or-nothing ve kısmi ödeme) manuel test edildi
+- Bu testler sırasında hata yanıtlarında (`404`/`400`/`409`/`502`) mesaj alanının boş geldiği fark edildi; tüm servislerin `application.yml`'ine `server.error.include-message: always` eklenerek düzeltildi
+- Docker-compose entegrasyonu ve tek komutla ayağa kalkma doğrulaması bilinçli olarak Faz 6-7'ye ertelendi (Search/Cart/Payment'ta olduğu gibi)
 
 ## Sınırlamalar
 

@@ -83,7 +83,7 @@ Mimari referans: Mock E-Ticaret Servisleri (Search, Cart, Payment, Inventory) �
 
 ---
 
-## FAZ 5 — Gün 5: Inventory Service ve Zincirin Tamamlanması
+## FAZ 5 — Gün 5: Inventory Service ve Zincirin Tamamlanması ✅ Tamamlandı
 
 1. Stok veri modelini tasarla (product_id, stock_count, reserved_count)
 2. Search Service'teki mock ürün listesiyle tutarlı bir stok veri seti oluştur

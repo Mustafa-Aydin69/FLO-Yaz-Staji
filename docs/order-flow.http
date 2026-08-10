@@ -1,0 +1,90 @@
+### Search: Nike ürünlerini ara
+GET http://localhost:8081/search?q=nike
+
+### Search: tekil ürün detayı
+GET http://localhost:8081/products/1
+
+### Cart: yeni sepet oluştur
+# Yanıttaki "cartId" değerini aşağıdaki isteklerde {{cartId}} yerine kopyalayın
+POST http://localhost:8082/cart
+Content-Type: application/json
+
+{
+  "userId": "demo"
+}
+
+### Cart: sepete ürün ekle (Air Runner X1, id=1, stoklu)
+POST http://localhost:8082/cart/{{cartId}}/items
+Content-Type: application/json
+
+{
+  "productId": 1,
+  "quantity": 1
+}
+
+### Cart: sepet içeriğini görüntüle (totalAmount kontrolü)
+GET http://localhost:8082/cart/{{cartId}}
+
+### Payment: ödeme oluştur (varsayılan, all-or-nothing)
+POST http://localhost:8083/payment
+Content-Type: application/json
+
+{
+  "cartId": "{{cartId}}"
+}
+
+### Payment: ödeme durumu sorgula
+# Yanıttaki "paymentId" değerini {{paymentId}} yerine kopyalayın
+GET http://localhost:8083/payment/{{paymentId}}
+
+### Inventory: rezervasyonun işlediğini doğrula (reservedCount artmış olmalı)
+GET http://localhost:8084/inventory/1
+
+###
+### --- Stok yetersizliği senaryosu ---
+### Sepete stoku olmayan bir ürün de ekleyin (Old Skool Wave, id=4, stock=0)
+
+### Cart: stok yetersiz ürün ekle
+POST http://localhost:8082/cart/{{cartId}}/items
+Content-Type: application/json
+
+{
+  "productId": 4,
+  "quantity": 1
+}
+
+### Payment: varsayılan davranış -> 409 Conflict (rezerve edilenler geri alınır)
+POST http://localhost:8083/payment
+Content-Type: application/json
+
+{
+  "cartId": "{{cartId}}"
+}
+
+### Payment: continueWithAvailable=true -> sadece stoku olan üründen tahsilat
+POST http://localhost:8083/payment
+Content-Type: application/json
+
+{
+  "cartId": "{{cartId}}",
+  "continueWithAvailable": true
+}
+
+###
+### --- Inventory: reserve/release doğrudan test ---
+
+### Inventory: manuel rezervasyon
+POST http://localhost:8084/inventory/1/reserve
+Content-Type: application/json
+
+{
+  "quantity": 1
+}
+
+### Inventory: manuel iade
+POST http://localhost:8084/inventory/1/release
+Content-Type: application/json
+
+{
+  "quantity": 1
+}
