@@ -97,7 +97,7 @@ Mimari referans: Mock E-Ticaret Servisleri (Search, Cart, Payment, Inventory) �
 10. Stok yetersizse ödeme akışının nasıl davrandığını test et (edge case)
 11. Logging middleware'i Inventory Service'e uygula
 12. Unit testler yaz (en az 3 case)
-13. Tüm servislerin docker-compose ile tek komutla (`docker-compose up`) ayağa kalktığını doğrula
+13. Tüm servislerin docker-compose ile tek komutla (`docker-compose up`) ayağa kalktığını doğrula *(Faz 6-7'ye ertelendi — madde 8 ile aynı gerekçe; madde 9'da 4 servis local'de manuel olarak ayrı ayrı çalıştırılıp doğrulandı)*
 14. README'ye tam mimari diyagramı ve "4 servis şu an çalışıyor" durum notu ekle
 15. Gün sonu: Postman/`.http` koleksiyonunu tam akış için güncelle
 
