@@ -91,7 +91,7 @@ Mimari referans: Mock E-Ticaret Servisleri (Search, Cart, Payment, Inventory) �
 4. `POST /inventory/{product_id}/reserve` — ödeme onaylandığında stok düşürme
 5. `POST /inventory/{product_id}/release` — ödeme başarısızsa stok iade
 6. Payment Service'i güncelle: ödeme başarılıysa Inventory Service'e reserve çağrısı yap
-7. Ödeme başarısız senaryosunda Inventory'e release çağrısı yapılmasını sağla (telafi mantığı)
+7. Ödeme başarısız senaryosunda Inventory'e release çağrısı yapılmasını sağla (telafi mantığı) *(Faz 15'e ertelendi — `BankApiClient` şu an hiçbir koşulda başarısız olmuyor, hata enjeksiyonu Faz 15'te eklenince bu telafi yolu birlikte kurulacak; stok-yetersizliği telafi mantığı madde 6'da zaten kuruldu)*
 8. Dockerfile + docker-compose entegrasyonu
 9. Search → Cart → Payment → Inventory tam zincirini uçtan uca manuel test et
 10. Stok yetersizse ödeme akışının nasıl davrandığını test et (edge case)
