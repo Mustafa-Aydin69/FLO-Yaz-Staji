@@ -43,6 +43,18 @@ public class InventoryController {
     return stockRepository.save(updated);
   }
 
+  @PostMapping("/inventory/{productId}/release")
+  public Stock release(
+      @PathVariable Long productId, @RequestBody StockAdjustmentRequest request) {
+    if (request.quantity() <= 0) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "quantity must be positive");
+    }
+    Stock stock = findStockOrThrow(productId);
+    int newReservedCount = Math.max(0, stock.reservedCount() - request.quantity());
+    Stock updated = new Stock(stock.productId(), stock.stockCount(), newReservedCount);
+    return stockRepository.save(updated);
+  }
+
   private Stock findStockOrThrow(Long productId) {
     return stockRepository
         .findById(productId)
