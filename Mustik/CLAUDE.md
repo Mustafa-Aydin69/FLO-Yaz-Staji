@@ -24,6 +24,14 @@ FAZLAR.md'deki maddeler **tek tek, sırayla** uygulanır — birden fazla madde 
 2. Claude yukarıdaki commit geri bildirimini sunar.
 3. Mustafa commit/push işlemini yapar ve bir sonraki maddeye geçilir.
 
+### Uygulamaya başlamadan önce izin
+
+**Claude, bir FAZ'ın alt adımlarını (1-14 gibi numaralı listeyi) tek seferde, onay almadan kod olarak uygulamaz.** Mustafa "maddeleri planlayalım", "getirir misin", "bakalım" gibi bir şey söylediğinde bu bir **planlama/tartışma daveti**dir, uygulama talimatı değildir — plan netleşse bile Claude kodu yazmaya başlamadan önce açıkça "uygulayayım mı?" diye sormalı veya Mustafa'nın net bir "başla/devam et/uygula" onayını beklemelidir.
+
+- Bir FAZ'ın planı birlikte netleştirildikten sonra bile, Claude uygulamaya geçmeden önce kısa bir onay ister.
+- Onay alınmadan dosya oluşturma/düzenleme yapılmaz.
+- Belirsizlik varsa (istek planlama mı yoksa uygulama emri mi?), Claude planlama olarak yorumlar ve sorar.
+
 ## Proje Bağlamı
 
 FLO Perakende Observability Simülatörü — Java Spring Boot ile yazılan mikroservisler (Search, Cart, Payment, Inventory), OpenTelemetry ile distributed tracing (Jaeger), Prometheus + Grafana ile metrik/dashboard, Locust ile yük testi, Alertmanager ile alarm. Detaylı faz planı için `FAZLAR.md` dosyasına bak.
