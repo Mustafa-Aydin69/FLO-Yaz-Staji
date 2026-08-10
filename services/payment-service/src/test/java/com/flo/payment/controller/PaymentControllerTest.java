@@ -4,6 +4,9 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyDouble;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -59,6 +62,17 @@ class PaymentControllerTest {
         Instant.parse("2026-01-01T00:00:00Z"));
   }
 
+  private CartDto cartWithTwoItems() {
+    CartItemDto available = new CartItemDto(1L, "Air Runner X1", 2899.90, 1);
+    CartItemDto unavailable = new CartItemDto(4L, "Old Skool Wave", 1799.00, 1);
+    return new CartDto(
+        CART_ID,
+        "test-user",
+        List.of(available, unavailable),
+        2899.90 + 1799.00,
+        Instant.parse("2026-01-01T00:00:00Z"));
+  }
+
   @Test
   void createPayment_returnsCreatedPayment_whenCartIsValid() throws Exception {
     when(cartServiceClient.findCart(CART_ID)).thenReturn(Optional.of(cartWithItem(1L, 2899.90, 1)));
@@ -101,6 +115,43 @@ class PaymentControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"cartId\":\"" + CART_ID + "\"}"))
         .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  void createPayment_returnsConflict_andReleasesReserved_whenAnyItemUnavailable() throws Exception {
+    when(cartServiceClient.findCart(CART_ID)).thenReturn(Optional.of(cartWithTwoItems()));
+    when(inventoryServiceClient.reserve(eq(1L), anyInt())).thenReturn(true);
+    when(inventoryServiceClient.reserve(eq(4L), anyInt())).thenReturn(false);
+
+    mockMvc
+        .perform(
+            post("/payment")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"cartId\":\"" + CART_ID + "\"}"))
+        .andExpect(status().isConflict());
+
+    verify(inventoryServiceClient).release(eq(1L), anyInt());
+    verify(bankApiClient, never()).charge(anyDouble());
+  }
+
+  @Test
+  void createPayment_chargesOnlyAvailableItems_whenContinueWithAvailableIsTrue() throws Exception {
+    when(cartServiceClient.findCart(CART_ID)).thenReturn(Optional.of(cartWithTwoItems()));
+    when(inventoryServiceClient.reserve(eq(1L), anyInt())).thenReturn(true);
+    when(inventoryServiceClient.reserve(eq(4L), anyInt())).thenReturn(false);
+    when(bankApiClient.charge(anyDouble())).thenReturn("txn-partial");
+    when(paymentRepository.save(any(Payment.class)))
+        .thenAnswer(invocation -> invocation.getArgument(0));
+
+    mockMvc
+        .perform(
+            post("/payment")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"cartId\":\"" + CART_ID + "\",\"continueWithAvailable\":true}"))
+        .andExpect(status().isCreated())
+        .andExpect(jsonPath("$.amount").value(2899.90));
+
+    verify(inventoryServiceClient, never()).release(eq(1L), anyInt());
   }
 
   @Test
