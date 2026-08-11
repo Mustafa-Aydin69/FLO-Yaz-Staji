@@ -11,33 +11,15 @@
     <relativePath>../../pom.xml</relativePath>
   </parent>
 
-  <artifactId>cart-service</artifactId>
+  <artifactId>common</artifactId>
   <packaging>jar</packaging>
-  <name>cart-service</name>
+  <name>common</name>
+  <description>Servisler arasi paylasilan yardimci siniflar (HTTP client hatasi, request logging filter)</description>
 
   <dependencies>
-    <dependency>
-      <groupId>com.flo</groupId>
-      <artifactId>common</artifactId>
-      <version>${project.version}</version>
-    </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-web</artifactId>
     </dependency>
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-test</artifactId>
-      <scope>test</scope>
-    </dependency>
   </dependencies>
-
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-maven-plugin</artifactId>
-      </plugin>
-    </plugins>
-  </build>
 </project>

@@ -1,4 +1,4 @@
-package com.flo.search.filter;
+package com.flo.common.logging;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

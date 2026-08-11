@@ -3,7 +3,7 @@ package com.flo.payment;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-@SpringBootApplication
+@SpringBootApplication(scanBasePackages = "com.flo")
 public class PaymentApplication {
 
   public static void main(String[] args) {

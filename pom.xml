@@ -27,6 +27,7 @@
   </properties>
 
   <modules>
+    <module>services/common</module>
     <module>services/search-service</module>
     <module>services/cart-service</module>
     <module>services/payment-service</module>

@@ -1,14 +1,13 @@
 package com.flo.payment.client;
 
+import com.flo.common.http.RemoteCallException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
-import org.springframework.web.server.ResponseStatusException;
 
 @Component
 public class InventoryServiceClient {
@@ -33,8 +32,7 @@ public class InventoryServiceClient {
     } catch (HttpClientErrorException.Conflict | HttpClientErrorException.NotFound ex) {
       return false;
     } catch (RestClientException ex) {
-      throw new ResponseStatusException(
-          HttpStatus.BAD_GATEWAY, "Inventory service unavailable: " + ex.getMessage());
+      throw RemoteCallException.unavailable("Inventory service", ex);
     }
   }
 
