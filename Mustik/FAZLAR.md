@@ -103,37 +103,37 @@ Mimari referans: Mock E-Ticaret Servisleri (Search, Cart, Payment, Inventory) �
 
 ---
 
-## FAZ 6 — Gün 6: Servisler Arası İletişimin Sağlamlaştırılması
+## FAZ 6 — Gün 6: Servisler Arası İletişimin Sağlamlaştırılması ✅ Tamamlandı
 
-1. Tüm servis-servis HTTP çağrılarını tek bir ortak `http_client.py`/`httpClient.js` modülünde topla
+1. Tüm servis-servis HTTP çağrılarını tek bir ortak `http_client.py`/`httpClient.js` modülünde topla *(madde 12 ile birlikte yapıldı — yeni `services/common` Maven modülü)*
 2. Timeout ve retry mantığı ekle (örn. 3 sn timeout, 1 retry)
 3. Servis URL'lerini `.env`/config dosyasından okuyacak şekilde merkezi hale getir
 4. Correlation/request ID üretimi ekle (henüz OTel yok, elle bir `X-Request-ID` header'ı taşı)
-5. Hata durumlarında tutarlı bir JSON error response formatı standardize et (tüm servislerde aynı şema)
-6. Circuit breaker mantığının gerekip gerekmediğini değerlendir, gerekirse basit bir versiyon ekle
+5. Hata durumlarında tutarlı bir JSON error response formatı standardize et (tüm servislerde aynı şema) *(Değerlendirildi — zaten tutarlıydı: Spring Boot varsayılan hata formatı 4 serviste birebir aynı; ek bir soyutlamaya gerek görülmedi)*
+6. Circuit breaker mantığının gerekip gerekmediğini değerlendir, gerekirse basit bir versiyon ekle *(Değerlendirildi — bu ölçekte gereksiz karmaşıklık olur; gerçek bir arıza senaryosu ortaya çıkınca Faz 15'te (gecikme/hata enjeksiyonu) yeniden değerlendirilecek)*
 7. docker-compose'a `depends_on` ve basit healthcheck tanımları ekle
 8. Servislerin birbirini beklemeden (henüz hazır değilken) çağrılması senaryosunu test et
-9. Load edilen `.env` değerlerinin her serviste doğru okunduğunu doğrula
+9. Load edilen `.env` değerlerinin her serviste doğru okunduğunu doğrula *(madde 3 ile birlikte yapıldı — `.env` override testiyle doğrulandı)*
 10. Entegrasyon testi yaz: 4 servisi aynı anda ayağa kaldırıp uçtan uca akışı otomatik test eden bir script
 11. README'ye "Servisler arası iletişim standartları" bölümü ekle
-12. Kod tabanını gözden geçir, tekrar eden kodu `common/` modülüne taşı
+12. Kod tabanını gözden geçir, tekrar eden kodu `common/` modülüne taşı *(madde 1 ile birlikte yapıldı)*
 13. Git commit + değişiklik notları
 
 ---
 
-## FAZ 7 — Gün 7: Docker Compose Ağının Sağlamlaştırılması
+## FAZ 7 — Gün 7: Docker Compose Ağının Sağlamlaştırılması ✅ Tamamlandı
 
 1. docker-compose.yml'de tüm servisler için sabit bir custom network tanımla
 2. Servis isimlerinin DNS olarak çalıştığını doğrula (container-to-container)
 3. Port çakışmalarını kontrol et, gerekirse portları yeniden düzenle
-4. Volume mount'ları değerlendir (log dosyaları için, geliştirme sırasında hot-reload için)
-5. `docker-compose.override.yml` ile dev/prod ayrımı yapılıp yapılmayacağına karar ver
+4. Volume mount'ları değerlendir (log dosyaları için, geliştirme sırasında hot-reload için) *(Değerlendirildi — gerekmiyor: loglar zaten stdout'a basılıyor, hot-reload için local `scripts/run_all.sh` (`mvn spring-boot:run`) kullanılıyor)*
+5. `docker-compose.override.yml` ile dev/prod ayrımı yapılıp yapılmayacağına karar ver *(Değerlendirildi — gerekmiyor, `.env`/`.env.example` mekanizması ortam-bağımlı config ihtiyacını zaten karşılıyor)*
 6. Healthcheck'leri her serviste `/health` endpoint'ine bağla (compose healthcheck direktifi)
 7. `docker-compose up -d` sonrası tüm container'ların `healthy` durumuna geçtiğini doğrula
 8. Container loglarını `docker-compose logs -f` ile izleyip anormallik var mı kontrol et
 9. Kaynak limitleri (CPU/memory) için ilk taslak sınırlar ekle
 10. Compose dosyasını `infra/docker-compose.yml` altına taşıyıp kök dizinden çalıştırmayı test et
-11. Tek komutla tüm sistemin ayağa kalkıp health-check'lerin geçtiğini doğrulayan bir smoke-test script'i yaz
+11. Tek komutla tüm sistemin ayağa kalkıp health-check'lerin geçtiğini doğrulayan bir smoke-test script'i yaz *(Ayrı bir script yerine Faz 6'da eklenen `scripts/integration-test.sh` kullanıldı — health-check beklemesini de kapsayan daha kapsamlı bir script)*
 12. README'ye "Projeyi çalıştırma" bölümünü net adımlarla güncelle
 13. Git commit, bu noktayı bir milestone olarak etiketle (`v0.1-services-ready`)
 
