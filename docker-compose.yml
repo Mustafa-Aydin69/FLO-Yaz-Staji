@@ -6,6 +6,12 @@ services:
       context: ./services/search-service
     ports:
       - "${SEARCH_SERVICE_PORT:-8081}:8081"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://localhost:8081/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
 
   cart-service:
     build:
@@ -14,6 +20,15 @@ services:
       - "${CART_SERVICE_PORT:-8082}:8082"
     environment:
       - SEARCH_SERVICE_BASE_URL=${SEARCH_SERVICE_DOCKER_URL:-http://search-service:8081}
+    depends_on:
+      search-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://localhost:8082/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
 
   payment-service:
     build:
@@ -23,9 +38,26 @@ services:
     environment:
       - CART_SERVICE_BASE_URL=${CART_SERVICE_DOCKER_URL:-http://cart-service:8082}
       - INVENTORY_SERVICE_BASE_URL=${INVENTORY_SERVICE_DOCKER_URL:-http://inventory-service:8084}
+    depends_on:
+      cart-service:
+        condition: service_healthy
+      inventory-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://localhost:8083/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
 
   inventory-service:
     build:
       context: ./services/inventory-service
     ports:
       - "${INVENTORY_SERVICE_PORT:-8084}:8084"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://localhost:8084/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
