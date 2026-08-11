@@ -14,3 +14,12 @@ services:
       - "${CART_SERVICE_PORT:-8082}:8082"
     environment:
       - SEARCH_SERVICE_BASE_URL=http://search-service:8081
+
+  payment-service:
+    build:
+      context: ./services/payment-service
+    ports:
+      - "${PAYMENT_SERVICE_PORT:-8083}:8083"
+    environment:
+      - CART_SERVICE_BASE_URL=http://cart-service:8082
+      - INVENTORY_SERVICE_BASE_URL=http://inventory-service:8084
