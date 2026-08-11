@@ -94,8 +94,10 @@ FLO-Yaz-Staji/
 ```bash
 git clone https://github.com/Mustafa-Aydin69/FLO-Yaz-Staji.git
 cd FLO-Yaz-Staji
-docker-compose up --build
+docker compose -f infra/docker-compose.yml up --build
 ```
+
+`.env.example`'ı `.env` olarak kopyalayıp portları/URL'leri özelleştirebilirsin (opsiyonel — kopyalanmazsa `infra/docker-compose.yml` içindeki varsayılan değerler kullanılır).
 
 Tüm servisler ayağa kalktıktan sonra:
 

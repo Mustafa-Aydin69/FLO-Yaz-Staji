@@ -1,4 +1,4 @@
-# Faz 7'de bu dosya infra/docker-compose.yml altina tasinacak.
+name: flo
 
 networks:
   flo-network:
@@ -8,7 +8,7 @@ networks:
 services:
   search-service:
     build:
-      context: ./services/search-service
+      context: ../services/search-service
     ports:
       - "${SEARCH_SERVICE_PORT:-8081}:8081"
     networks:
@@ -27,7 +27,7 @@ services:
 
   cart-service:
     build:
-      context: ./services/cart-service
+      context: ../services/cart-service
     ports:
       - "${CART_SERVICE_PORT:-8082}:8082"
     environment:
@@ -51,7 +51,7 @@ services:
 
   payment-service:
     build:
-      context: ./services/payment-service
+      context: ../services/payment-service
     ports:
       - "${PAYMENT_SERVICE_PORT:-8083}:8083"
     environment:
@@ -78,7 +78,7 @@ services:
 
   inventory-service:
     build:
-      context: ./services/inventory-service
+      context: ../services/inventory-service
     ports:
       - "${INVENTORY_SERVICE_PORT:-8084}:8084"
     networks:

@@ -10,9 +10,17 @@ CART_URL="http://localhost:${CART_SERVICE_PORT:-8082}"
 PAYMENT_URL="http://localhost:${PAYMENT_SERVICE_PORT:-8083}"
 INVENTORY_URL="http://localhost:${INVENTORY_SERVICE_PORT:-8084}"
 
+COMPOSE_ARGS=(-f infra/docker-compose.yml)
+if [ -f .env ]; then
+  COMPOSE_ARGS+=(--env-file .env)
+fi
+compose() {
+  docker compose "${COMPOSE_ARGS[@]}" "$@"
+}
+
 fail() {
   echo "FAIL: $1"
-  docker compose down
+  compose down
   exit 1
 }
 
@@ -35,7 +43,7 @@ wait_healthy() {
 }
 
 echo "==> docker compose up -d --build"
-docker compose up -d --build || fail "docker compose up basarisiz oldu"
+compose up -d --build || fail "docker compose up basarisiz oldu"
 
 echo "==> Servislerin healthy olmasi bekleniyor"
 wait_healthy "$SEARCH_URL" "search-service"
@@ -80,5 +88,5 @@ fi
 echo "    reservedCount: $RESERVED_BEFORE -> $RESERVED_AFTER"
 
 echo "==> Tum adimlar basarili. Temizleniyor..."
-docker compose down
+compose down
 echo "OK: uctan uca entegrasyon testi gecti."
