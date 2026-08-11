@@ -35,7 +35,7 @@ Kampanya dönemlerinde yüksek trafik alan e-ticaret sistemlerinde tek bir sipar
 | **Payment Service** | Ödeme işleme; rastgele %3 hata (HTTP 500 / POS timeout) enjeksiyonu içerir |
 | **Inventory Service** | Stok sorgulama, ödeme sonucuna göre stok düşürme/iade etme |
 
-### Şu Anki Durum (Gün 5)
+### Şu Anki Durum (Gün 6)
 
 Yukarıdaki hedef mimari (OTel Collector, Jaeger, Prometheus, Grafana, Alertmanager) henüz kurulmadı — bunlar Faz 8'den itibaren ekleniyor. Şu an çalışan zincir:
 
@@ -45,7 +45,7 @@ Yukarıdaki hedef mimari (OTel Collector, Jaeger, Prometheus, Grafana, Alertmana
       |________________ ürün doğrulaması ______|  (Cart, ürün eklerken Search'e sorar)
 ```
 
-**4 servis de çalışır durumda ve uçtan uca bir sipariş akışını (arama → sepet → ödeme → stok rezervasyonu) destekliyor.** Ödeme, sepetteki her ürün için Inventory'den stok rezerve ediyor; stok yetersizse ya tüm işlem geri alınıyor (`409`) ya da (istek üzerine) sadece stoku olan ürünlerden tahsilat yapılıyor. Docker Compose entegrasyonu henüz yok (Faz 6-7'de eklenecek), servisler şu an local'de ayrı ayrı çalıştırılıp manuel test ediliyor.
+**4 servis de çalışır durumda ve uçtan uca bir sipariş akışını (arama → sepet → ödeme → stok rezervasyonu) destekliyor.** Ödeme, sepetteki her ürün için Inventory'den stok rezerve ediyor; stok yetersizse ya tüm işlem geri alınıyor (`409`) ya da (istek üzerine) sadece stoku olan ürünlerden tahsilat yapılıyor. **Docker Compose entegrasyonu tamamlandı** — `docker-compose up --build` ile 4 servis tek komutla, doğru sırayla (`depends_on` + healthcheck) ve container network üzerinden birbirini servis adıyla bularak ayağa kalkıyor.
 
 ## Teknoloji Yığını
 
@@ -178,6 +178,17 @@ curl -X POST http://localhost:8084/inventory/1/release -H "Content-Type: applica
 
 **Payment Service'in Inventory entegrasyonu:** `POST /payment` isteği artık sepetteki her ürün için ayrı ayrı rezervasyon deniyor. Herhangi bir ürünün stoku yetersizse, o ana kadar rezerve edilenler otomatik olarak geri alınır (`release`) ve `409 Conflict` döner (all-or-nothing). İstek body'sine opsiyonel `"continueWithAvailable": true` eklenirse, Payment Service sadece stoku olan ürünlerden tahsilat yapar ve tutarı buna göre yeniden hesaplar.
 
+## Servisler Arası İletişim Standartları
+
+Tüm servis-servis HTTP çağrıları (`SearchServiceClient`, `CartServiceClient`, `InventoryServiceClient`) ortak `services/common` modülü üzerinden aşağıdaki kurallara uyar:
+
+- **Timeout:** Her çağrıda 3 saniyelik connect + read timeout uygulanır (`RestClientFactory`).
+- **Retry:** Sadece bağlantı/timeout kaynaklı hatalarda (`ResourceAccessException`) 1 kez otomatik retry yapılır. `404`/`409` gibi iş mantığı hata kodları retry edilmez (deterministik oldukları için tekrar denemek anlamsızdır, POST'larda yan etkiye de yol açabilir).
+- **Erişilemezlik:** Downstream servise hiç ulaşılamazsa (timeout, bağlantı reddi, DNS hatası) çağıran servis `502 Bad Gateway` döner, mesajda hangi servisin erişilemez olduğu belirtilir (örn. `"Search service unavailable: ..."`).
+- **Correlation ID:** Her istek bir `X-Request-ID` header'ı taşır — client vermezse sunucu otomatik bir UUID üretir. Bu ID, o isteğin tetiklediği tüm alt servis çağrılarına otomatik olarak taşınır ve her serviste log satırına yazılır (`[requestId] METHOD path -> status (süre)`), böylece tek bir isteğin tüm servislerdeki izini sürmek mümkündür.
+- **Hata response formatı:** Tüm servisler aynı JSON şemasını kullanır: `{"timestamp", "status", "error", "message", "path"}` (Spring Boot varsayılanı, `server.error.include-message: always` ile).
+- **Config:** Servis URL'leri kod içinde sabitlenmez; `.env`/`.env.example` üzerinden okunur (local geliştirme için `*_URL`, Docker Compose network'ü için `*_DOCKER_URL`).
+
 ## Örnek Kullanım Senaryoları
 
 1. **Sipariş Darboğazı Tespiti** — Bir isteğin hangi serviste ne kadar zaman harcadığını `trace_id` ile Jaeger üzerinden tespit etme. Detay: [`docs/senaryo-darbogaz.md`](docs/senaryo-darbogaz.md)
@@ -238,6 +249,19 @@ Projenin 20 günlük, gün gün ilerleyen detaylı faz planı için [`FAZLAR.md`
 - Search → Cart → Payment → Inventory tam zinciri 4 servis local'de ayrı ayrı çalıştırılarak uçtan uca manuel doğrulandı (curl ile); ayrıca stok yetersizliği edge case'i (all-or-nothing ve kısmi ödeme) manuel test edildi
 - Bu testler sırasında hata yanıtlarında (`404`/`400`/`409`/`502`) mesaj alanının boş geldiği fark edildi; tüm servislerin `application.yml`'ine `server.error.include-message: always` eklenerek düzeltildi
 - Docker-compose entegrasyonu ve tek komutla ayağa kalkma doğrulaması bilinçli olarak Faz 6-7'ye ertelendi (Search/Cart/Payment'ta olduğu gibi)
+
+### Gün 6 Durumu — Servisler Arası İletişimin Sağlamlaştırılması
+
+- Faz 2/3/4/5'ten ertelenen Docker maddeleri tamamlandı: 4 servisin de Dockerfile'ı `docker build` ile test edildi, `docker-compose.yml`'e eklendi, aynı container network'ünde servis adlarıyla birbirini bulabildikleri doğrulandı, `docker-compose up --build` ile tek komutla tam zincir (Search → Cart → Payment → Inventory) uçtan uca test edildi
+- Yeni bir Maven modülü olan `services/common` eklendi; 4 serviste birebir tekrar eden `RequestLoggingFilter` ve servis-servis HTTP çağrı kalıpları (404→boş sonuç, erişilemezse `502`) buraya taşındı
+- Tüm servis-servis `RestClient`'lara ortak bir fabrika (`RestClientFactory`) üzerinden 3 saniyelik connect+read timeout eklendi; sadece bağlantı/timeout hatalarında (iş mantığı hata kodlarında değil) 1 kez retry yapan ortak bir mekanizma eklendi
+- Servis URL'leri `.env`/`.env.example` üzerinden merkezi hale getirildi (Docker network içi URL'ler için ayrı değişkenler: `SEARCH_SERVICE_DOCKER_URL` vb.)
+- Her isteğe bir `X-Request-ID` correlation ID'si eklendi (client vermezse otomatik üretiliyor); bu ID servisler arası tüm çağrılarda otomatik taşınıyor ve loglara yazılıyor — tek bir isteğin 4 servis logunda da aynı ID ile izlenebildiği doğrulandı
+- Hata response formatının (Spring Boot varsayılan `timestamp`/`status`/`error`/`message`/`path` şeması) zaten 4 serviste birebir tutarlı olduğu doğrulandı, ek bir soyutlamaya gerek görülmedi
+- Circuit breaker eklenmesi değerlendirildi; bu ölçekte (henüz metrik/dashboard ve chaos enjeksiyonu yok) gereksiz karmaşıklık olacağına karar verilip Faz 15'e ertelendi
+- `docker-compose.yml`'e `depends_on` (`condition: service_healthy`) ve `/health` tabanlı healthcheck'ler eklendi; servislerin doğru sırayla ayağa kalktığı doğrulandı
+- Bir servis bağımlı olduğu servis hiç ayakta değilken çağrıldığında (`--no-deps` ile bilerek test edildi) sınırlı sürede (~5 sn) temiz bir `502` döndüğü, isteğin sonsuza kadar asılı kalmadığı doğrulandı
+- `scripts/integration-test.sh` eklendi: 4 servisi `docker compose` ile ayağa kaldırıp uçtan uca akışı otomatik test eden, adım adım assertion yapan bir script
 
 ## Sınırlamalar
 
