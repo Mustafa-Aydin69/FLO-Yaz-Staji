@@ -89,24 +89,44 @@ FLO-Yaz-Staji/
 - Java 17+ (yalnızca lokal geliştirme için)
 - Maven veya Gradle
 
-### Ayağa kaldırma
+### Projeyi çalıştırma
 
-```bash
-git clone https://github.com/Mustafa-Aydin69/FLO-Yaz-Staji.git
-cd FLO-Yaz-Staji
-docker compose -f infra/docker-compose.yml up --build
-```
+1. Reponu klonla ve dizine gir:
+   ```bash
+   git clone https://github.com/Mustafa-Aydin69/FLO-Yaz-Staji.git
+   cd FLO-Yaz-Staji
+   ```
+2. *(Opsiyonel)* Port/URL'leri özelleştirmek istersen `.env.example`'ı `.env` olarak kopyala:
+   ```bash
+   cp .env.example .env
+   ```
+   Kopyalamazsan `infra/docker-compose.yml` içindeki varsayılan değerler (8081-8084 portları, container network URL'leri) kullanılır — proje `.env` olmadan da doğrudan çalışır.
+3. 4 servisi tek komutla ayağa kaldır:
+   ```bash
+   docker compose -f infra/docker-compose.yml up --build
+   ```
+   Servisler sırayla (`depends_on` + healthcheck ile) ayağa kalkar: önce Search ve Inventory, onlar `healthy` olunca Cart, o da `healthy` olunca Payment.
+4. Servislerin ayakta olduğunu doğrula:
 
-`.env.example`'ı `.env` olarak kopyalayıp portları/URL'leri özelleştirebilirsin (opsiyonel — kopyalanmazsa `infra/docker-compose.yml` içindeki varsayılan değerler kullanılır).
+   | Servis | Health check |
+   |---|---|
+   | Search Service | http://localhost:8081/health |
+   | Cart Service | http://localhost:8082/health |
+   | Payment Service | http://localhost:8083/health |
+   | Inventory Service | http://localhost:8084/health |
 
-Tüm servisler ayağa kalktıktan sonra:
+   Detaylı endpoint listesi için aşağıdaki [API Dokümantasyonu](#api-dokümantasyonu) bölümüne bakabilirsin.
+5. *(Opsiyonel)* Tüm zinciri (arama → sepet → ödeme → stok) otomatik doğrulamak için:
+   ```bash
+   ./scripts/integration-test.sh
+   ```
+   Bu script servisleri kendi başına ayağa kaldırıp test eder ve sonunda `docker compose down` ile temizler.
+6. Durdurmak için:
+   ```bash
+   docker compose -f infra/docker-compose.yml down
+   ```
 
-| Arayüz | URL |
-|---|---|
-| Jaeger UI | http://localhost:16686 |
-| Prometheus UI | http://localhost:9090 |
-| Grafana | http://localhost:3000 |
-| Alertmanager | http://localhost:9093 |
+> **Not:** Jaeger, Prometheus, Grafana ve Alertmanager arayüzleri bu fazda henüz mevcut değil — bunlar Faz 8'den itibaren eklenecek (bkz. [Geliştirme Planı](FAZLAR.md)).
 
 ## API Dokümantasyonu
 
