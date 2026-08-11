@@ -1,11 +1,18 @@
 # Faz 7'de bu dosya infra/docker-compose.yml altina tasinacak.
 
+networks:
+  flo-network:
+    name: flo-network
+    driver: bridge
+
 services:
   search-service:
     build:
       context: ./services/search-service
     ports:
       - "${SEARCH_SERVICE_PORT:-8081}:8081"
+    networks:
+      - flo-network
     healthcheck:
       test: ["CMD", "wget", "-q", "-O", "-", "http://localhost:8081/health"]
       interval: 10s
@@ -20,6 +27,8 @@ services:
       - "${CART_SERVICE_PORT:-8082}:8082"
     environment:
       - SEARCH_SERVICE_BASE_URL=${SEARCH_SERVICE_DOCKER_URL:-http://search-service:8081}
+    networks:
+      - flo-network
     depends_on:
       search-service:
         condition: service_healthy
@@ -38,6 +47,8 @@ services:
     environment:
       - CART_SERVICE_BASE_URL=${CART_SERVICE_DOCKER_URL:-http://cart-service:8082}
       - INVENTORY_SERVICE_BASE_URL=${INVENTORY_SERVICE_DOCKER_URL:-http://inventory-service:8084}
+    networks:
+      - flo-network
     depends_on:
       cart-service:
         condition: service_healthy
@@ -55,6 +66,8 @@ services:
       context: ./services/inventory-service
     ports:
       - "${INVENTORY_SERVICE_PORT:-8084}:8084"
+    networks:
+      - flo-network
     healthcheck:
       test: ["CMD", "wget", "-q", "-O", "-", "http://localhost:8084/health"]
       interval: 10s
