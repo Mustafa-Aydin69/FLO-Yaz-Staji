@@ -1,5 +1,6 @@
 package com.flo.common.http;
 
+import com.flo.common.correlation.RequestIdPropagationInterceptor;
 import java.time.Duration;
 import org.springframework.boot.web.client.ClientHttpRequestFactories;
 import org.springframework.boot.web.client.ClientHttpRequestFactorySettings;
@@ -19,6 +20,7 @@ public final class RestClientFactory {
     return RestClient.builder()
         .baseUrl(baseUrl)
         .requestFactory(ClientHttpRequestFactories.get(settings))
+        .requestInterceptor(new RequestIdPropagationInterceptor())
         .build();
   }
 }
