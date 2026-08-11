@@ -17,7 +17,8 @@ public final class RemoteLookup {
       Object... uriVariables) {
     try {
       return Optional.ofNullable(
-          restClient.get().uri(uri, uriVariables).retrieve().body(responseType));
+          RemoteCallRetry.withRetry(
+              () -> restClient.get().uri(uri, uriVariables).retrieve().body(responseType)));
     } catch (HttpClientErrorException.NotFound ex) {
       return Optional.empty();
     } catch (RestClientException ex) {

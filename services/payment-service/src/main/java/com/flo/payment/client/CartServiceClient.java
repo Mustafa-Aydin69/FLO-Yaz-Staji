@@ -1,6 +1,7 @@
 package com.flo.payment.client;
 
 import com.flo.common.http.RemoteLookup;
+import com.flo.common.http.RestClientFactory;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Value;
@@ -13,7 +14,7 @@ public class CartServiceClient {
   private final RestClient restClient;
 
   public CartServiceClient(@Value("${cart-service.base-url}") String baseUrl) {
-    this.restClient = RestClient.builder().baseUrl(baseUrl).build();
+    this.restClient = RestClientFactory.create(baseUrl);
   }
 
   public Optional<CartDto> findCart(UUID cartId) {

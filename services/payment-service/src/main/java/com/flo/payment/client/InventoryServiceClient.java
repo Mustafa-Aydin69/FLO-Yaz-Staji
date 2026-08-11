@@ -1,6 +1,8 @@
 package com.flo.payment.client;
 
 import com.flo.common.http.RemoteCallException;
+import com.flo.common.http.RemoteCallRetry;
+import com.flo.common.http.RestClientFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,17 +19,19 @@ public class InventoryServiceClient {
   private final RestClient restClient;
 
   public InventoryServiceClient(@Value("${inventory-service.base-url}") String baseUrl) {
-    this.restClient = RestClient.builder().baseUrl(baseUrl).build();
+    this.restClient = RestClientFactory.create(baseUrl);
   }
 
   public boolean reserve(Long productId, int quantity) {
     try {
-      restClient
-          .post()
-          .uri("/inventory/{productId}/reserve", productId)
-          .body(new StockAdjustmentRequest(quantity))
-          .retrieve()
-          .toBodilessEntity();
+      RemoteCallRetry.withRetry(
+          () ->
+              restClient
+                  .post()
+                  .uri("/inventory/{productId}/reserve", productId)
+                  .body(new StockAdjustmentRequest(quantity))
+                  .retrieve()
+                  .toBodilessEntity());
       return true;
     } catch (HttpClientErrorException.Conflict | HttpClientErrorException.NotFound ex) {
       return false;
@@ -38,12 +42,14 @@ public class InventoryServiceClient {
 
   public void release(Long productId, int quantity) {
     try {
-      restClient
-          .post()
-          .uri("/inventory/{productId}/release", productId)
-          .body(new StockAdjustmentRequest(quantity))
-          .retrieve()
-          .toBodilessEntity();
+      RemoteCallRetry.withRetry(
+          () ->
+              restClient
+                  .post()
+                  .uri("/inventory/{productId}/release", productId)
+                  .body(new StockAdjustmentRequest(quantity))
+                  .retrieve()
+                  .toBodilessEntity());
     } catch (RestClientException ex) {
       log.warn("Failed to release stock for product {}: {}", productId, ex.getMessage());
     }
