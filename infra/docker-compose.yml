@@ -94,3 +94,18 @@ services:
         limits:
           cpus: "0.5"
           memory: 512M
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.158.0
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otelcol-contrib/config.yaml:ro
+    ports:
+      - "${OTEL_COLLECTOR_GRPC_PORT:-4317}:4317"
+      - "${OTEL_COLLECTOR_HTTP_PORT:-4318}:4318"
+    networks:
+      - flo-network
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
