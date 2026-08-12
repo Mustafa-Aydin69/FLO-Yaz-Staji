@@ -12,12 +12,12 @@ public final class RestClientFactory {
 
   private RestClientFactory() {}
 
-  public static RestClient create(String baseUrl) {
+  public static RestClient create(RestClient.Builder builder, String baseUrl) {
     ClientHttpRequestFactorySettings settings =
         ClientHttpRequestFactorySettings.DEFAULTS
             .withConnectTimeout(TIMEOUT)
             .withReadTimeout(TIMEOUT);
-    return RestClient.builder()
+    return builder
         .baseUrl(baseUrl)
         .requestFactory(ClientHttpRequestFactories.get(settings))
         .requestInterceptor(new RequestIdPropagationInterceptor())

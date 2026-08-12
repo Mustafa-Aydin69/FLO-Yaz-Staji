@@ -13,8 +13,9 @@ public class CartServiceClient {
 
   private final RestClient restClient;
 
-  public CartServiceClient(@Value("${cart-service.base-url}") String baseUrl) {
-    this.restClient = RestClientFactory.create(baseUrl);
+  public CartServiceClient(
+      RestClient.Builder restClientBuilder, @Value("${cart-service.base-url}") String baseUrl) {
+    this.restClient = RestClientFactory.create(restClientBuilder, baseUrl);
   }
 
   public Optional<CartDto> findCart(UUID cartId) {

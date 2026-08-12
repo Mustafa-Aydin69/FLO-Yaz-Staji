@@ -12,8 +12,9 @@ public class SearchServiceClient {
 
   private final RestClient restClient;
 
-  public SearchServiceClient(@Value("${search-service.base-url}") String baseUrl) {
-    this.restClient = RestClientFactory.create(baseUrl);
+  public SearchServiceClient(
+      RestClient.Builder restClientBuilder, @Value("${search-service.base-url}") String baseUrl) {
+    this.restClient = RestClientFactory.create(restClientBuilder, baseUrl);
   }
 
   public Optional<ProductDto> findProduct(Long productId) {

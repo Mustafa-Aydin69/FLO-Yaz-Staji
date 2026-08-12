@@ -18,8 +18,10 @@ public class InventoryServiceClient {
 
   private final RestClient restClient;
 
-  public InventoryServiceClient(@Value("${inventory-service.base-url}") String baseUrl) {
-    this.restClient = RestClientFactory.create(baseUrl);
+  public InventoryServiceClient(
+      RestClient.Builder restClientBuilder,
+      @Value("${inventory-service.base-url}") String baseUrl) {
+    this.restClient = RestClientFactory.create(restClientBuilder, baseUrl);
   }
 
   public boolean reserve(Long productId, int quantity) {
