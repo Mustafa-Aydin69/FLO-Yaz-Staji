@@ -9,16 +9,29 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.flo.inventory.model.Stock;
 import com.flo.inventory.repository.StockRepository;
+import io.opentelemetry.api.OpenTelemetry;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(InventoryController.class)
+@Import(InventoryControllerTest.OtelTestConfig.class)
 class InventoryControllerTest {
+
+  @TestConfiguration
+  static class OtelTestConfig {
+    @Bean
+    OpenTelemetry openTelemetry() {
+      return OpenTelemetry.noop();
+    }
+  }
 
   @Autowired private MockMvc mockMvc;
 

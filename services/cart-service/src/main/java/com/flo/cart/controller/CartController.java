@@ -7,6 +7,11 @@ import com.flo.cart.model.Cart;
 import com.flo.cart.model.CartItem;
 import com.flo.cart.model.CreateCartRequest;
 import com.flo.cart.repository.CartRepository;
+import io.opentelemetry.api.OpenTelemetry;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.StatusCode;
+import io.opentelemetry.api.trace.Tracer;
+import io.opentelemetry.context.Scope;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,10 +31,15 @@ public class CartController {
 
   private final CartRepository cartRepository;
   private final SearchServiceClient searchServiceClient;
+  private final Tracer tracer;
 
-  public CartController(CartRepository cartRepository, SearchServiceClient searchServiceClient) {
+  public CartController(
+      CartRepository cartRepository,
+      SearchServiceClient searchServiceClient,
+      OpenTelemetry openTelemetry) {
     this.cartRepository = cartRepository;
     this.searchServiceClient = searchServiceClient;
+    this.tracer = openTelemetry.getTracer(CartController.class.getName());
   }
 
   @PostMapping("/cart")
@@ -67,17 +77,31 @@ public class CartController {
                     new ResponseStatusException(
                         HttpStatus.NOT_FOUND, "Product not found: " + request.productId()));
 
-    List<CartItem> updatedItems = new ArrayList<>(cart.items());
-    updatedItems.add(
-        new CartItem(product.id(), product.name(), product.price(), request.quantity()));
-    Cart updatedCart =
-        new Cart(
-            cart.cartId(),
-            cart.userId(),
-            List.copyOf(updatedItems),
-            totalAmount(updatedItems),
-            cart.createdAt());
-    return cartRepository.save(updatedCart);
+    Span span = tracer.spanBuilder("update-cart").startSpan();
+    span.setAttribute("cart.cart_id", cartId.toString());
+    span.setAttribute("cart.product_id", request.productId());
+    span.setAttribute("cart.quantity", request.quantity());
+    try (Scope scope = span.makeCurrent()) {
+      List<CartItem> updatedItems = new ArrayList<>(cart.items());
+      updatedItems.add(
+          new CartItem(product.id(), product.name(), product.price(), request.quantity()));
+      Cart updatedCart =
+          new Cart(
+              cart.cartId(),
+              cart.userId(),
+              List.copyOf(updatedItems),
+              totalAmount(updatedItems),
+              cart.createdAt());
+      span.setAttribute("cart.item_count", updatedItems.size());
+      span.setAttribute("cart.total_amount", updatedCart.totalAmount());
+      return cartRepository.save(updatedCart);
+    } catch (RuntimeException e) {
+      span.recordException(e);
+      span.setStatus(StatusCode.ERROR, e.getMessage());
+      throw e;
+    } finally {
+      span.end();
+    }
   }
 
   @DeleteMapping("/cart/{cartId}/items/{productId}")

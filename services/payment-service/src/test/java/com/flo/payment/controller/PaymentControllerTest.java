@@ -21,6 +21,7 @@ import com.flo.payment.client.InventoryServiceClient;
 import com.flo.payment.model.Payment;
 import com.flo.payment.model.PaymentStatus;
 import com.flo.payment.repository.PaymentRepository;
+import io.opentelemetry.api.OpenTelemetry;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -28,12 +29,24 @@ import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(PaymentController.class)
+@Import(PaymentControllerTest.OtelTestConfig.class)
 class PaymentControllerTest {
+
+  @TestConfiguration
+  static class OtelTestConfig {
+    @Bean
+    OpenTelemetry openTelemetry() {
+      return OpenTelemetry.noop();
+    }
+  }
 
   @Autowired private MockMvc mockMvc;
 

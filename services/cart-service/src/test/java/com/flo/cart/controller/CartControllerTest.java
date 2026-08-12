@@ -13,6 +13,7 @@ import com.flo.cart.client.SearchServiceClient;
 import com.flo.cart.model.Cart;
 import com.flo.cart.model.CartItem;
 import com.flo.cart.repository.CartRepository;
+import io.opentelemetry.api.OpenTelemetry;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -20,12 +21,24 @@ import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(CartController.class)
+@Import(CartControllerTest.OtelTestConfig.class)
 class CartControllerTest {
+
+  @TestConfiguration
+  static class OtelTestConfig {
+    @Bean
+    OpenTelemetry openTelemetry() {
+      return OpenTelemetry.noop();
+    }
+  }
 
   @Autowired private MockMvc mockMvc;
 

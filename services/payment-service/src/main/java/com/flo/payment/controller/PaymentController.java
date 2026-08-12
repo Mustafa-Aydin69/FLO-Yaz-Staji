@@ -9,6 +9,11 @@ import com.flo.payment.model.CreatePaymentRequest;
 import com.flo.payment.model.Payment;
 import com.flo.payment.model.PaymentStatus;
 import com.flo.payment.repository.PaymentRepository;
+import io.opentelemetry.api.OpenTelemetry;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.StatusCode;
+import io.opentelemetry.api.trace.Tracer;
+import io.opentelemetry.context.Scope;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,16 +34,19 @@ public class PaymentController {
   private final CartServiceClient cartServiceClient;
   private final InventoryServiceClient inventoryServiceClient;
   private final BankApiClient bankApiClient;
+  private final Tracer tracer;
 
   public PaymentController(
       PaymentRepository paymentRepository,
       CartServiceClient cartServiceClient,
       InventoryServiceClient inventoryServiceClient,
-      BankApiClient bankApiClient) {
+      BankApiClient bankApiClient,
+      OpenTelemetry openTelemetry) {
     this.paymentRepository = paymentRepository;
     this.cartServiceClient = cartServiceClient;
     this.inventoryServiceClient = inventoryServiceClient;
     this.bankApiClient = bankApiClient;
+    this.tracer = openTelemetry.getTracer(PaymentController.class.getName());
   }
 
   @PostMapping("/payment")
@@ -84,7 +92,21 @@ public class PaymentController {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No items available to charge");
     }
 
-    String transactionId = bankApiClient.charge(amount);
+    Span span = tracer.spanBuilder("bank-charge").startSpan();
+    span.setAttribute("payment.cart_id", cart.cartId().toString());
+    span.setAttribute("payment.amount", amount);
+    String transactionId;
+    try (Scope scope = span.makeCurrent()) {
+      transactionId = bankApiClient.charge(amount);
+      span.setAttribute("payment.transaction_id", transactionId);
+    } catch (RuntimeException e) {
+      span.recordException(e);
+      span.setStatus(StatusCode.ERROR, e.getMessage());
+      throw e;
+    } finally {
+      span.end();
+    }
+
     Payment payment =
         new Payment(
             UUID.randomUUID(),
