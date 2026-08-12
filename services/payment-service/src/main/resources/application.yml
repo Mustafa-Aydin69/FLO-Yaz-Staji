@@ -12,3 +12,16 @@ cart-service:
 
 inventory-service:
   base-url: http://localhost:8084
+
+otel:
+  service:
+    name: ${OTEL_SERVICE_NAME:payment-service}
+  instrumentation:
+    spring-webmvc:
+      enabled: ${OTEL_INSTRUMENTATION_SPRING_WEBMVC_ENABLED:true}
+  traces:
+    exporter: ${OTEL_TRACES_EXPORTER:logging}
+  metrics:
+    exporter: ${OTEL_METRICS_EXPORTER:none}
+  logs:
+    exporter: ${OTEL_LOGS_EXPORTER:none}
