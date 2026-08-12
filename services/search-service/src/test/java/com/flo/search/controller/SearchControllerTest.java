@@ -8,16 +8,29 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.flo.search.model.Product;
 import com.flo.search.repository.ProductRepository;
+import io.opentelemetry.api.OpenTelemetry;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(SearchController.class)
+@Import(SearchControllerTest.OtelTestConfig.class)
 class SearchControllerTest {
+
+  @TestConfiguration
+  static class OtelTestConfig {
+    @Bean
+    OpenTelemetry openTelemetry() {
+      return OpenTelemetry.noop();
+    }
+  }
 
   @Autowired private MockMvc mockMvc;
 

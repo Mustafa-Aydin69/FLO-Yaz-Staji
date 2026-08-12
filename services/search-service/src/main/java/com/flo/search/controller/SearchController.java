@@ -4,6 +4,7 @@ import com.flo.search.model.Product;
 import com.flo.search.repository.ProductRepository;
 import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.StatusCode;
 import io.opentelemetry.api.trace.Tracer;
 import io.opentelemetry.context.Scope;
 import java.util.List;
@@ -45,6 +46,10 @@ public class SearchController {
               .toList();
       span.setAttribute("search.result_count", results.size());
       return results;
+    } catch (RuntimeException e) {
+      span.recordException(e);
+      span.setStatus(StatusCode.ERROR, e.getMessage());
+      throw e;
     } finally {
       span.end();
     }
