@@ -10,3 +10,6 @@ spring:
 otel:
   service:
     name: search-service
+  instrumentation:
+    spring-webmvc:
+      enabled: true
