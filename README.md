@@ -285,6 +285,16 @@ Projenin 20 günlük, gün gün ilerleyen detaylı faz planı için [`FAZLAR.md`
 - Bir servis bağımlı olduğu servis hiç ayakta değilken çağrıldığında (`--no-deps` ile bilerek test edildi) sınırlı sürede (~5 sn) temiz bir `502` döndüğü, isteğin sonsuza kadar asılı kalmadığı doğrulandı
 - `scripts/integration-test.sh` eklendi: 4 servisi `docker compose` ile ayağa kaldırıp uçtan uca akışı otomatik test eden, adım adım assertion yapan bir script
 
+### Gün 8 Durumu — Observability: Tracing Kurulumu (Search Service)
+
+- Search Service'e `opentelemetry-instrumentation-bom` (2.16.0) + `opentelemetry-spring-boot-starter` eklendi; root `pom.xml`'de bu BOM import'u `spring-boot-dependencies`'den önce sıralandı (aksi halde OTel çekirdek kütüphaneleri ile bazı alt bağımlılıkları arasında versiyon çakışması oluşup servis açılışta hata veriyordu)
+- `otel.service.name=search-service` resource attribute'u ile `TracerProvider` kuruldu; Spring MVC otomatik instrumentation'ı (`otel.instrumentation.spring-webmvc.enabled`) her `/search`, `/products/{id}` isteği için otomatik bir `SERVER` span'i üretiyor
+- Trace exporter olarak `logging` (konsola basan `LoggingSpanExporter`) ayarlandı; metrics/logs exporter'ları bu fazın kapsamı dışında olduğu için `none` bırakıldı
+- `SearchController`'daki kataloğu filtreleme adımı, `search.query` ve `search.result_count` attribute'larını taşıyan manuel bir `filter-catalog` child span'ine sarıldı; her istekte aynı `trace_id` altında üretildiği doğrulandı
+- Hata durumunda `filter-catalog` span'i `ERROR` status'una geçiriliyor ve exception kaydediliyor (`recordException` + `setStatus`); bunu kalıcı olarak doğrulayan `InMemorySpanExporter` tabanlı bir unit test (`SearchControllerTracingTest`) eklendi
+- Tüm OTel ayarları (`OTEL_SERVICE_NAME`, `OTEL_TRACES_EXPORTER`, `OTEL_METRICS_EXPORTER`, `OTEL_LOGS_EXPORTER`, `OTEL_INSTRUMENTATION_SPRING_WEBMVC_ENABLED`) `.env.example` üzerinden environment variable'larla parametrize edilebiliyor
+- Jaeger/OTel Collector henüz kurulmadı — trace'ler şu an yalnızca Search Service'in kendi konsoluna basılıyor; Collector entegrasyonu Faz 10'da, diğer servislere (Cart/Payment/Inventory) tracing yayılması Faz 9'da yapılacak
+
 ## Sınırlamalar
 
 - Servisler arası veri gerçek bir veritabanı yerine mock/in-memory veri ile simüle edilir
