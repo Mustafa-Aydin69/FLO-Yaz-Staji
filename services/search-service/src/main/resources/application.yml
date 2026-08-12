@@ -6,3 +6,7 @@ server:
 spring:
   application:
     name: search-service
+
+otel:
+  service:
+    name: search-service
