@@ -24,4 +24,4 @@ otel:
     exporter: ${OTEL_LOGS_EXPORTER:none}
   exporter:
     otlp:
-      endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT:http://localhost:4317}
+      endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT:http://localhost:4318}

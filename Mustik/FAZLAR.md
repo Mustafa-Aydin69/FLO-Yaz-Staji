@@ -177,12 +177,12 @@ Mimari referans: Mock E-Ticaret Servisleri (Search, Cart, Payment, Inventory) �
 
 ## FAZ 10 — Gün 10: OTel Collector Kurulumu ve Trace Propagation Testi
 
-1. OpenTelemetry Collector için `otel-collector-config.yaml` dosyasını oluştur
-2. Receiver olarak OTLP (gRPC/HTTP) tanımla
-3. Şimdilik `logging` exporter ile Collector'ın veriyi aldığını doğrula
-4. Collector'ı docker-compose'a servis olarak ekle
-5. 4 mikroservisin OTel exporter endpoint'lerini Collector'a yönlendir (console yerine)
-6. `docker-compose up` sonrası Collector loglarında trace verisinin aktığını gözlemle
+1. OpenTelemetry Collector için `otel-collector-config.yaml` dosyasını oluştur ✅
+2. Receiver olarak OTLP (gRPC/HTTP) tanımla ✅
+3. Şimdilik `logging` exporter ile Collector'ın veriyi aldığını doğrula *(`debug` exporter ile doğrulandı — güncel Collector sürümlerinde `logging` exporter `debug` olarak yeniden adlandırıldı)* ✅
+4. Collector'ı docker-compose'a servis olarak ekle ✅
+5. 4 mikroservisin OTel exporter endpoint'lerini Collector'a yönlendir (console yerine) ✅
+6. `docker-compose up` sonrası Collector loglarında trace verisinin aktığını gözlemle ✅
 7. Uçtan uca bir isteği (Search→Cart→Payment→Inventory) tetikleyip Collector loglarında tek `trace_id` altında 4 servisin span'lerini ara
 8. Trace propagation kopması olursa (farklı trace_id'ler) sebebini debug et ve düzelt
 9. Collector için batch processor ekleyerek performansı iyileştir
