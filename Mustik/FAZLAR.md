@@ -151,7 +151,7 @@ Mimari referans: Mock E-Ticaret Servisleri (Search, Cart, Payment, Inventory) �
 8. `trace_id` ve `span_id`'nin her istekte farklı üretildiğini doğrula
 9. Hata durumunda span'in `ERROR` status'una geçtiğini test et (kasıtlı bir exception fırlat)
 10. OTel konfigürasyonunu environment variable'lardan okuyacak şekilde parametrize et
-11. Bu adımları `common/` modülüne taşıyıp diğer servislerde tekrar kullanılabilir hale getir
+11. Bu adımları `common/` modülüne taşıyıp diğer servislerde tekrar kullanılabilir hale getir *(Değerlendirildi — root `pom.xml`'deki OTel BOM importu zaten tüm modüller için merkezi yönetiliyor; ancak şu an tek tüketici (search-service) varken `common`'a taşınacak somut, tekrar kullanılabilir Java kodu yok — gereksiz soyutlama olur. Gerçek paylaşım Faz 9'da OTel Cart/Payment/Inventory'ye yayılırken, en az iki tüketici olduğunda yapılacak)*
 12. README'ye "Observability — Tracing kurulumu (Search Service)" notu ekle
 13. Git commit
 
