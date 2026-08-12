@@ -32,15 +32,19 @@ public class SearchController {
           HttpStatus.BAD_REQUEST, "Query parameter 'q' must not be blank");
     }
     Span span = tracer.spanBuilder("filter-catalog").startSpan();
+    span.setAttribute("search.query", q);
     try (Scope scope = span.makeCurrent()) {
       String needle = q.toLowerCase();
-      return productRepository.findAll().stream()
-          .filter(
-              p ->
-                  p.name().toLowerCase().contains(needle)
-                      || p.category().toLowerCase().contains(needle)
-                      || p.brand().toLowerCase().contains(needle))
-          .toList();
+      List<Product> results =
+          productRepository.findAll().stream()
+              .filter(
+                  p ->
+                      p.name().toLowerCase().contains(needle)
+                          || p.category().toLowerCase().contains(needle)
+                          || p.brand().toLowerCase().contains(needle))
+              .toList();
+      span.setAttribute("search.result_count", results.size());
+      return results;
     } finally {
       span.end();
     }
