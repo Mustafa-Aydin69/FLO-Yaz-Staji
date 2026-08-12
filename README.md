@@ -295,6 +295,16 @@ Projenin 20 günlük, gün gün ilerleyen detaylı faz planı için [`FAZLAR.md`
 - Tüm OTel ayarları (`OTEL_SERVICE_NAME`, `OTEL_TRACES_EXPORTER`, `OTEL_METRICS_EXPORTER`, `OTEL_LOGS_EXPORTER`, `OTEL_INSTRUMENTATION_SPRING_WEBMVC_ENABLED`) `.env.example` üzerinden environment variable'larla parametrize edilebiliyor
 - Jaeger/OTel Collector henüz kurulmadı — trace'ler şu an yalnızca Search Service'in kendi konsoluna basılıyor; Collector entegrasyonu Faz 10'da, diğer servislere (Cart/Payment/Inventory) tracing yayılması Faz 9'da yapılacak
 
+### Gün 9 Durumu — Observability: Tracing Cart, Payment, Inventory Servislerine Yayıldı
+
+- Cart/Payment/Inventory servislerine Search Service ile aynı OTel kurulumu uygulandı (`opentelemetry-spring-boot-starter`, `otel.service.name` her serviste kendi adına — `cart-service`/`payment-service`/`inventory-service`, `logging` trace exporter, env var parametrizasyonu)
+- **Kritik bug bulundu ve düzeltildi:** Servisler arası çağrılarda (`RestClientFactory`) `RestClient.builder()` doğrudan çağrılıyordu, bu Spring'in auto-configure ettiği (ve OTel/Observation instrumentation'ını içeren) `RestClient.Builder` bean'ini bypass edip `traceparent` header'ının hiç taşınmamasına yol açıyordu — her servis çağrısı kendi başına yeni bir trace başlatıyordu. Üç client sınıfı (`SearchServiceClient`, `CartServiceClient`, `InventoryServiceClient`) Spring-yönetimli `RestClient.Builder`'ı inject edecek şekilde düzeltildi; düzeltme sonrası tüm zincirde (Cart→Search, Payment→Cart, Payment→Inventory) tek bir `trace_id`'nin korunduğu gerçek çoklu-servis testleriyle doğrulandı
+- Her serviste kritik bir iş adımına manuel child span eklendi: Cart'ta `update-cart` (sepet güncelleme), Payment'ta `bank-charge` (`BankApiClient` çağrısı), Inventory'de `reserve-stock`/`release-stock` (stok ayarlama) — hepsi `search.*` ile aynı desende (`<servis>.<alan>` attribute isimlendirmesi, hata durumunda `ERROR` status + exception kaydı)
+- Hata senaryoları (stok yetersizliği, banka çağrısı hatası — `BankApiClient` şu an hiç başarısız olmadığından mock'lanarak) `InMemorySpanExporter` tabanlı kalıcı unit testlerle (`InventoryControllerTracingTest`, `PaymentControllerTracingTest`) doğrulandı
+- Tüm servislerin `@WebMvcTest`'lerine, constructor'a eklenen `OpenTelemetry` bağımlılığı için `OpenTelemetry.noop()` test config'i proaktif olarak eklendi (Search Service'te Faz 8'de keşfedilen regresyonun tekrarlanmaması için)
+- `mvn verify` (tüm reactor) ile 29/29 test geçtiği, spotless format kontrolünün temiz olduğu doğrulandı
+- 4 servis aynı anda çalışırken tek bir isteğin trace'ini takip etmenin (her servisin ayrı konsol logunu elle karşılaştırmak) ne kadar zahmetli olduğu gözlemlendi — bu, Faz 10-11'deki OTel Collector/Jaeger ihtiyacının somut gerekçesi
+
 ## Sınırlamalar
 
 - Servisler arası veri gerçek bir veritabanı yerine mock/in-memory veri ile simüle edilir
