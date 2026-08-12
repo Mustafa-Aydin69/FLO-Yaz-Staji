@@ -9,13 +9,13 @@ spring:
 
 otel:
   service:
-    name: search-service
+    name: ${OTEL_SERVICE_NAME:search-service}
   instrumentation:
     spring-webmvc:
-      enabled: true
+      enabled: ${OTEL_INSTRUMENTATION_SPRING_WEBMVC_ENABLED:true}
   traces:
-    exporter: logging
+    exporter: ${OTEL_TRACES_EXPORTER:logging}
   metrics:
-    exporter: none
+    exporter: ${OTEL_METRICS_EXPORTER:none}
   logs:
-    exporter: none
+    exporter: ${OTEL_LOGS_EXPORTER:none}
