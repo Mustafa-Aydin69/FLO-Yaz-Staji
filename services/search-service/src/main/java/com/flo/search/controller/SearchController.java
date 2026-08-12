@@ -2,6 +2,10 @@ package com.flo.search.controller;
 
 import com.flo.search.model.Product;
 import com.flo.search.repository.ProductRepository;
+import io.opentelemetry.api.OpenTelemetry;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.Tracer;
+import io.opentelemetry.context.Scope;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,9 +18,11 @@ import org.springframework.web.server.ResponseStatusException;
 public class SearchController {
 
   private final ProductRepository productRepository;
+  private final Tracer tracer;
 
-  public SearchController(ProductRepository productRepository) {
+  public SearchController(ProductRepository productRepository, OpenTelemetry openTelemetry) {
     this.productRepository = productRepository;
+    this.tracer = openTelemetry.getTracer(SearchController.class.getName());
   }
 
   @GetMapping("/search")
@@ -25,14 +31,19 @@ public class SearchController {
       throw new ResponseStatusException(
           HttpStatus.BAD_REQUEST, "Query parameter 'q' must not be blank");
     }
-    String needle = q.toLowerCase();
-    return productRepository.findAll().stream()
-        .filter(
-            p ->
-                p.name().toLowerCase().contains(needle)
-                    || p.category().toLowerCase().contains(needle)
-                    || p.brand().toLowerCase().contains(needle))
-        .toList();
+    Span span = tracer.spanBuilder("filter-catalog").startSpan();
+    try (Scope scope = span.makeCurrent()) {
+      String needle = q.toLowerCase();
+      return productRepository.findAll().stream()
+          .filter(
+              p ->
+                  p.name().toLowerCase().contains(needle)
+                      || p.category().toLowerCase().contains(needle)
+                      || p.brand().toLowerCase().contains(needle))
+          .toList();
+    } finally {
+      span.end();
+    }
   }
 
   @GetMapping("/products/{id}")

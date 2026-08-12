@@ -13,3 +13,9 @@ otel:
   instrumentation:
     spring-webmvc:
       enabled: true
+  traces:
+    exporter: logging
+  metrics:
+    exporter: none
+  logs:
+    exporter: none
