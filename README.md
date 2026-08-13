@@ -305,6 +305,26 @@ Projenin 20 günlük, gün gün ilerleyen detaylı faz planı için [`FAZLAR.md`
 - `mvn verify` (tüm reactor) ile 29/29 test geçtiği, spotless format kontrolünün temiz olduğu doğrulandı
 - 4 servis aynı anda çalışırken tek bir isteğin trace'ini takip etmenin (her servisin ayrı konsol logunu elle karşılaştırmak) ne kadar zahmetli olduğu gözlemlendi — bu, Faz 10-11'deki OTel Collector/Jaeger ihtiyacının somut gerekçesi
 
+### Gün 10 Durumu — OTel Collector Kurulumu ve Trace Propagation Testi
+
+```
+[ Search :8081 ]
+[ Cart :8082    ]  --OTLP/HTTP (4318)-->  [ OTel Collector ]
+[ Payment :8083 ]                          |   receivers: otlp (grpc:4317, http:4318)
+[ Inventory :8084]                          |   processors: batch (5s / 1024 span)
+                                            |   exporters: debug (verbosity: detailed)
+                                            |   extensions: health_check (:13133)
+                                            v
+                                   flo-otel-collector-1 logları
+                              (docker compose logs -f otel-collector)
+```
+
+- `infra/otel-collector-config.yaml` oluşturuldu: `otlp` receiver (gRPC 4317 + HTTP 4318), `debug` exporter, `batch` processor (5s timeout, 1024 span batch size) ve `health_check` extension (`0.0.0.0:13133`)
+- Collector, `infra/docker-compose.yml`'e servis olarak eklendi; config dosyası read-only volume ile `/etc/otelcol-contrib/config.yaml`'a mount ediliyor
+- 4 servisin `OTEL_EXPORTER_OTLP_ENDPOINT` değeri konsol yerine `http://otel-collector:4318`'e yönlendirildi
+- Uçtan uca bir sipariş akışı (cart oluştur → ürün ekle → ödeme yap) tetiklenip Collector logları incelendi: **trace propagation her kök istek içinde doğru çalışıyor**, ama mimaride "sipariş" tek bir HTTP isteği olmadığından (3 bağımsız kök istek: `POST /cart`, `POST /cart/{id}/items`, `POST /payment`) tek bir trace_id 4 servisin tamamını kapsamıyor — bunun yerine her kök isteğin kendi trace_id'si, o istek içindeki tüm alt-çağrılarda (örn. ürün ekle → cart+search, ödeme → payment+cart+inventory) tutarlı şekilde taşınıyor; kopma tespit edilmedi
+- Collector image'ı (`otel/opentelemetry-collector-contrib`) distroless olduğundan (konteynerde `sh`/`wget`/`curl` yok) diğer servislerdeki gibi Docker-native healthcheck kurulamadı; bunun yerine resmi `health_check` extension'ı eklenip `curl http://localhost:13133/` ile `200 OK` doğrulandı — `depends_on` bu servis için `service_started` olarak kaldı
+
 ## Sınırlamalar
 
 - Servisler arası veri gerçek bir veritabanı yerine mock/in-memory veri ile simüle edilir

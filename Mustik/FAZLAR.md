@@ -187,8 +187,8 @@ Mimari referans: Mock E-Ticaret Servisleri (Search, Cart, Payment, Inventory) �
 8. Trace propagation kopması olursa (farklı trace_id'ler) sebebini debug et ve düzelt *(Değerlendirildi — madde 7'deki testte kopma tespit edilmedi, her alt-çağrı zincirinde trace_id tutarlıydı; düzeltilecek bir şey yok)* ✅
 9. Collector için batch processor ekleyerek performansı iyileştir *(`otel-collector-config.yaml`'a `batch` processor eklendi — 5s timeout, 1024 span batch size; export'ların anlık tek span yerine ~5 saniyelik pencerelerde gruplanarak gönderildiği doğrulandı)* ✅
 10. Collector healthcheck'ini docker-compose'a ekle *(`otel/opentelemetry-collector-contrib` image'ı distroless — konteynerde `sh`/`wget`/`curl` yok, bu yüzden diğer 4 serviste kullanılan Docker-native `wget` healthcheck'i burada çalışmıyor. Bunun yerine Collector config'ine resmi `health_check` extension'ı eklendi (`0.0.0.0:13133`), port docker-compose'da dışarı açıldı ve `curl http://localhost:13133/` ile `200 OK` doğrulandı; ancak `depends_on` hâlâ `service_started` olarak kalıyor, `service_healthy` değil, çünkü Docker'ın kendi HEALTHCHECK mekanizmasını bu image üzerinde çalıştıracak bir araç yok)* ✅
-11. Collector konfigürasyonunu `infra/otel-collector-config.yaml` altında versiyonla
-12. README'ye Collector mimarisi ve veri akışı diyagramını ekle
+11. Collector konfigürasyonunu `infra/otel-collector-config.yaml` altında versiyonla *(Zaten bu şekilde — dosya bu yolda oluşturulmuş ve git'te takip ediliyor, ek işlem gerekmedi)* ✅
+12. README'ye Collector mimarisi ve veri akışı diyagramını ekle *(README'ye "Gün 10 Durumu" bölümü eklendi: OTLP receiver→batch processor→debug exporter veri akışı diyagramı, propagation test sonucu ve healthcheck kısıtı notu)* ✅
 13. Git commit
 
 ---
