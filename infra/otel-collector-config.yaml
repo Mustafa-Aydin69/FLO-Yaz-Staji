@@ -15,7 +15,12 @@ processors:
     timeout: 5s
     send_batch_size: 1024
 
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133
+
 service:
+  extensions: [health_check]
   pipelines:
     traces:
       receivers: [otlp]

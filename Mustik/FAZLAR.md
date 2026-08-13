@@ -183,10 +183,10 @@ Mimari referans: Mock E-Ticaret Servisleri (Search, Cart, Payment, Inventory) �
 4. Collector'ı docker-compose'a servis olarak ekle ✅
 5. 4 mikroservisin OTel exporter endpoint'lerini Collector'a yönlendir (console yerine) ✅
 6. `docker-compose up` sonrası Collector loglarında trace verisinin aktığını gözlemle ✅
-7. Uçtan uca bir isteği (Search→Cart→Payment→Inventory) tetikleyip Collector loglarında tek `trace_id` altında 4 servisin span'lerini ara
-8. Trace propagation kopması olursa (farklı trace_id'ler) sebebini debug et ve düzelt
-9. Collector için batch processor ekleyerek performansı iyileştir
-10. Collector healthcheck'ini docker-compose'a ekle
+7. Uçtan uca bir isteği (Search→Cart→Payment→Inventory) tetikleyip Collector loglarında tek `trace_id` altında 4 servisin span'lerini ara *(Doğrulandı — mimaride "sipariş" tek bir HTTP isteği değil, 3 bağımsız kök istekten oluşuyor (cart oluştur / ürün ekle / ödeme yap); her kök istek kendi trace_id'sini üretiyor ve o istek içindeki tüm alt-çağrılar (örn. ürün ekle → cart+search, ödeme → payment+cart+inventory) aynı trace_id'yi doğru şekilde taşıyor)* ✅
+8. Trace propagation kopması olursa (farklı trace_id'ler) sebebini debug et ve düzelt *(Değerlendirildi — madde 7'deki testte kopma tespit edilmedi, her alt-çağrı zincirinde trace_id tutarlıydı; düzeltilecek bir şey yok)* ✅
+9. Collector için batch processor ekleyerek performansı iyileştir *(`otel-collector-config.yaml`'a `batch` processor eklendi — 5s timeout, 1024 span batch size; export'ların anlık tek span yerine ~5 saniyelik pencerelerde gruplanarak gönderildiği doğrulandı)* ✅
+10. Collector healthcheck'ini docker-compose'a ekle *(`otel/opentelemetry-collector-contrib` image'ı distroless — konteynerde `sh`/`wget`/`curl` yok, bu yüzden diğer 4 serviste kullanılan Docker-native `wget` healthcheck'i burada çalışmıyor. Bunun yerine Collector config'ine resmi `health_check` extension'ı eklendi (`0.0.0.0:13133`), port docker-compose'da dışarı açıldı ve `curl http://localhost:13133/` ile `200 OK` doğrulandı; ancak `depends_on` hâlâ `service_started` olarak kalıyor, `service_healthy` değil, çünkü Docker'ın kendi HEALTHCHECK mekanizmasını bu image üzerinde çalıştıracak bir araç yok)* ✅
 11. Collector konfigürasyonunu `infra/otel-collector-config.yaml` altında versiyonla
 12. README'ye Collector mimarisi ve veri akışı diyagramını ekle
 13. Git commit
