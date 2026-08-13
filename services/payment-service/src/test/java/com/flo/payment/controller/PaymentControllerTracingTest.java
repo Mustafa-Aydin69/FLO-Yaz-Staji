@@ -12,6 +12,7 @@ import com.flo.payment.client.CartServiceClient;
 import com.flo.payment.client.InventoryServiceClient;
 import com.flo.payment.model.CreatePaymentRequest;
 import com.flo.payment.repository.PaymentRepository;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.opentelemetry.api.trace.StatusCode;
 import io.opentelemetry.sdk.OpenTelemetrySdk;
 import io.opentelemetry.sdk.testing.exporter.InMemorySpanExporter;
@@ -60,7 +61,8 @@ class PaymentControllerTracingTest {
             cartServiceClient,
             inventoryServiceClient,
             bankApiClient,
-            openTelemetry);
+            openTelemetry,
+            new SimpleMeterRegistry());
 
     assertThrows(
         RuntimeException.class,

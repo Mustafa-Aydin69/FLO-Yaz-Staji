@@ -9,6 +9,8 @@ import com.flo.payment.model.CreatePaymentRequest;
 import com.flo.payment.model.Payment;
 import com.flo.payment.model.PaymentStatus;
 import com.flo.payment.repository.PaymentRepository;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
 import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.StatusCode;
@@ -35,18 +37,23 @@ public class PaymentController {
   private final InventoryServiceClient inventoryServiceClient;
   private final BankApiClient bankApiClient;
   private final Tracer tracer;
+  private final Counter paymentsSuccessCounter;
+  private final Counter paymentsFailedCounter;
 
   public PaymentController(
       PaymentRepository paymentRepository,
       CartServiceClient cartServiceClient,
       InventoryServiceClient inventoryServiceClient,
       BankApiClient bankApiClient,
-      OpenTelemetry openTelemetry) {
+      OpenTelemetry openTelemetry,
+      MeterRegistry meterRegistry) {
     this.paymentRepository = paymentRepository;
     this.cartServiceClient = cartServiceClient;
     this.inventoryServiceClient = inventoryServiceClient;
     this.bankApiClient = bankApiClient;
     this.tracer = openTelemetry.getTracer(PaymentController.class.getName());
+    this.paymentsSuccessCounter = meterRegistry.counter("payments_success_total");
+    this.paymentsFailedCounter = meterRegistry.counter("payments_failed_total");
   }
 
   @PostMapping("/payment")
@@ -78,6 +85,7 @@ public class PaymentController {
 
     if (!unavailable.isEmpty() && !continueWithAvailable) {
       reserved.forEach(item -> inventoryServiceClient.release(item.productId(), item.quantity()));
+      paymentsFailedCounter.increment();
       throw new ResponseStatusException(
           HttpStatus.CONFLICT, "Insufficient stock for products: " + unavailable);
     }
@@ -89,6 +97,7 @@ public class PaymentController {
 
     if (amount <= 0) {
       reserved.forEach(item -> inventoryServiceClient.release(item.productId(), item.quantity()));
+      paymentsFailedCounter.increment();
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No items available to charge");
     }
 
@@ -115,6 +124,7 @@ public class PaymentController {
             PaymentStatus.SUCCESS,
             transactionId,
             Instant.now());
+    paymentsSuccessCounter.increment();
     return paymentRepository.save(payment);
   }
 

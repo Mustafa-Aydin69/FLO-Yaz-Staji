@@ -21,6 +21,8 @@ import com.flo.payment.client.InventoryServiceClient;
 import com.flo.payment.model.Payment;
 import com.flo.payment.model.PaymentStatus;
 import com.flo.payment.repository.PaymentRepository;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.opentelemetry.api.OpenTelemetry;
 import java.time.Instant;
 import java.util.List;
@@ -45,6 +47,11 @@ class PaymentControllerTest {
     @Bean
     OpenTelemetry openTelemetry() {
       return OpenTelemetry.noop();
+    }
+
+    @Bean
+    MeterRegistry meterRegistry() {
+      return new SimpleMeterRegistry();
     }
   }
 
