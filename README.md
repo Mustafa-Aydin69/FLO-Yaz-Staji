@@ -345,6 +345,21 @@ Projenin 20 günlük, gün gün ilerleyen detaylı faz planı için [`FAZLAR.md`
 
 > _Ekran görüntüsü placeholder'ı: Jaeger UI'da `POST /payment` trace timeline görünümü (3 servis, 7 span) — `docs/screenshots/gun11-jaeger-trace.png`_
 
+### Gün 12 Durumu — Metrics: Prometheus Kurulumu
+
+```
+[ Search :8081   ]
+[ Cart :8082     ]  <--scrape (10s)--  [ Prometheus :9090 ]
+[ Payment :8083  ]     /actuator/prometheus
+[ Inventory :8084]
+```
+
+- 4 servise `spring-boot-starter-actuator` + `micrometer-registry-prometheus` eklendi; `management.endpoints.web.exposure.include=health,prometheus` ile `/actuator/prometheus` açıldı
+- RED metrikleri Micrometer'ın Spring MVC otomatik enstrümantasyonundan geliyor: `http_server_requests_seconds_count/_sum/_bucket` — `method`, `uri`, `status` etiketleriyle; gerçek histogram bucket'ları için `percentiles-histogram.http.server.requests=true` ayarlandı (ileride `histogram_quantile()` p95/p99 panelleri için gerekli)
+- `prom/prometheus:v2.55.1` docker-compose'a eklendi, `infra/prometheus.yml`'de 4 servis için scrape job'ı tanımlandı (10s interval, container adı+port ile), tüm target'lar `UP`
+- Custom iş metrikleri: Payment Service'te `payments_success_total`/`payments_failed_total` (başarı/stok yetersizliği/sıfır-tutar senaryolarında artıyor), Inventory Service'te ürün başına canlı `stock_level{product_id=...}` gauge'i (`stockCount - reservedCount`)
+- PromQL ile doğrulandı: `rate(http_server_requests_seconds_count[1m])` gerçek zamanlı sonuç döndürüyor; manuel isteklerle sayaçların arttığı (`/search` → count=10) ve gauge'in canlı güncellendiği (reserve/release ile 42→41→42) doğrulandı
+
 ## Sınırlamalar
 
 - Servisler arası veri gerçek bir veritabanı yerine mock/in-memory veri ile simüle edilir

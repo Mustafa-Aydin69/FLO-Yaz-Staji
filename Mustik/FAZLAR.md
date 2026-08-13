@@ -222,9 +222,9 @@ Mimari referans: Mock E-Ticaret Servisleri (Search, Cart, Payment, Inventory) �
 8. Servislere birkaç manuel istek atıp metriklerin arttığını Prometheus'ta gözlemle *(`GET /search?q=nike` 10 kez atıldı, öncesi/sonrası karşılaştırıldı: `http_server_requests_seconds_count{uri="/search",status="200"}` tam olarak 10'a çıktığı doğrulandı)* ✅
 9. Custom bir iş metriği ekle (örn. Payment Service'te `payments_success_total`, `payments_failed_total`) *(`PaymentController`'a `MeterRegistry` inject edildi; başarılı ödemede `payments_success_total`, stok yetersizliği (409) ve sıfır-tutar (400) senaryolarında `payments_failed_total` artırılıyor. Test dosyaları (`PaymentControllerTest`, `PaymentControllerTracingTest`) yeni constructor parametresine göre güncellendi, `mvn test` geçti. Uçtan uca doğrulandı: `payments_success_total 1.0`)* ✅
 10. Inventory Service'te `stock_level` gauge metriği ekle *(`StockRepository`'ye `findAll()` eklendi, yeni `StockMetrics` bileşeni `@PostConstruct`'ta her ürün için `stock_level{product_id=...}` gauge'i (`stockCount - reservedCount`, canlı okuma) kaydediyor. `mvn test` geçti; canlı doğrulama: `reserve` sonrası 42.0→41.0, `release` sonrası 41.0→42.0)* ✅
-11. Prometheus scrape interval'ını (örn. 5s-15s) değerlendir ve ayarla
-12. Prometheus config dosyasını `infra/prometheus.yml` altında versiyonla
-13. README'ye "Metrics — Prometheus kurulumu" bölümü ekle
+11. Prometheus scrape interval'ını (örn. 5s-15s) değerlendir ve ayarla *(Zaten `10s` — önerilen aralığın ortası, dev ortamı için makul; değişiklik gerekmedi)* ✅
+12. Prometheus config dosyasını `infra/prometheus.yml` altında versiyonla *(Zaten bu yolda oluşturulmuş ve git'te takip ediliyor)* ✅
+13. README'ye "Metrics — Prometheus kurulumu" bölümü ekle *(README'ye "Gün 12 Durumu" bölümü eklendi: veri akışı diyagramı, RED metrikleri, scrape config, custom metrikler, PromQL doğrulaması)* ✅
 14. Git commit
 
 ---
