@@ -195,9 +195,9 @@ Mimari referans: Mock E-Ticaret Servisleri (Search, Cart, Payment, Inventory) �
 
 ## FAZ 11 — Gün 11: Jaeger/Tempo Kurulumu ve Trace Görselleştirme
 
-1. Jaeger (all-in-one) veya Grafana Tempo image'ını docker-compose'a ekle
-2. OTel Collector'ın trace exporter'ını Jaeger/Tempo'ya yönlendir (Collector config güncelle)
-3. Jaeger UI'a (örn. `localhost:16686`) tarayıcıdan erişip arayüzü keşfet
+1. Jaeger (all-in-one) veya Grafana Tempo image'ını docker-compose'a ekle *(Jaeger seçildi — README'de zaten referans verilmişti; `jaegertracing/all-in-one:1.65.0`, OTLP receiver aktif, UI portu `16686`)* ✅
+2. OTel Collector'ın trace exporter'ını Jaeger/Tempo'ya yönlendir (Collector config güncelle) *(`otel-collector-config.yaml`'a `otlp/jaeger` exporter'ı eklendi, `debug` ile birlikte pipeline'da; Jaeger `/api/services` ve `/api/traces` üzerinden 4 servisin de trace gönderdiği doğrulandı)* ✅
+3. Jaeger UI'a (örn. `localhost:16686`) tarayıcıdan erişip arayüzü keşfet *(Chrome ile gezildi — Search/Compare/System Architecture/Monitor sekmeleri, servis/operation filtreleri, ve `POST /payment` trace'i timeline görünümünde incelendi: payment-service→cart-service GET, payment-service→inventory-service POST/reserve→reserve-stock child span, payment-service bank-charge (~300ms, toplam süreyi domine eden span) — 3 servis, 7 span tek trace'te doğru görüntülendi)* ✅
 4. Uçtan uca bir sipariş isteği tetikleyip Jaeger UI'da `trace_id` ile arama yap
 5. 4 servisin span'lerinin tek bir trace timeline'ında göründüğünü doğrula
 6. Her span'in süresini (duration) inceleyip hangi servisin en çok zaman aldığını gözlemle
