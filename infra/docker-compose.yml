@@ -145,3 +145,22 @@ services:
         limits:
           cpus: "0.5"
           memory: 512M
+
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "${PROMETHEUS_PORT:-9090}:9090"
+    networks:
+      - flo-network
+    depends_on:
+      - search-service
+      - cart-service
+      - payment-service
+      - inventory-service
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M

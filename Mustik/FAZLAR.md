@@ -215,9 +215,9 @@ Mimari referans: Mock E-Ticaret Servisleri (Search, Cart, Payment, Inventory) �
 1. Her mikroservise `/metrics` endpoint'i ekle (prometheus_client / prom-client kütüphanesi ile) *(Java/Spring Boot mimarisine uyarlandı: `spring-boot-starter-actuator` + `micrometer-registry-prometheus` 4 servise de eklendi, `management.endpoints.web.exposure.include=health,prometheus` ile `/actuator/prometheus` açıldı. 4 servis de `200` dönüyor, doğrulandı — Spring Boot'ta idiyomatik path `/metrics` değil `/actuator/prometheus`)* ✅
 2. Temel RED metriklerini tanımla: `http_requests_total` (Counter), `http_request_duration_seconds` (Histogram) *(Micrometer'ın Spring MVC otomatik enstrümantasyonu `http_server_requests_seconds` metriğini zaten üretiyordu (Counter+Sum+Max) ama gerçek histogram bucket'ları yoktu (Faz 14'teki `histogram_quantile()` p95/p99 panelleri için gerekli); 4 servise `management.metrics.distribution.percentiles-histogram.http.server.requests=true` eklendi, `_bucket{le=...}` satırları doğrulandı. `mvn test` ile tüm paket (29 test) hâlâ yeşil)* ✅
 3. Her endpoint için method/path/status_code label'larını doğru şekilde ekle *(Otomatik geliyor — her `http_server_requests_seconds*` satırında `method`, `uri`, `status` etiketleri doğru şekilde mevcut, doğrulandı)* ✅
-4. Prometheus image'ını docker-compose'a ekle, `prometheus.yml` scrape config dosyasını oluştur
-5. Scrape target olarak 4 servisin `/metrics` endpoint'lerini tanımla (servis adı + port)
-6. Prometheus UI'a (`localhost:9090`) erişip target'ların `UP` durumunda olduğunu doğrula
+4. Prometheus image'ını docker-compose'a ekle, `prometheus.yml` scrape config dosyasını oluştur *(`prom/prometheus:v2.55.1` docker-compose'a eklendi, `infra/prometheus.yml` oluşturuldu — 10s scrape interval)* ✅
+5. Scrape target olarak 4 servisin `/metrics` endpoint'lerini tanımla (servis adı + port) *(4 job tanımlandı, `metrics_path: /actuator/prometheus`, container adı+port ile: `search-service:8081`, `cart-service:8082`, `payment-service:8083`, `inventory-service:8084`)* ✅
+6. Prometheus UI'a (`localhost:9090`) erişip target'ların `UP` durumunda olduğunu doğrula *(`/api/v1/targets` ile doğrulandı — kısa bir "unknown" (ilk scrape öncesi) sonrası 4 target'ın da `health:"up"` olduğu görüldü)* ✅
 7. Basit bir PromQL sorgusu çalıştır (örn. `rate(http_requests_total[1m])`)
 8. Servislere birkaç manuel istek atıp metriklerin arttığını Prometheus'ta gözlemle
 9. Custom bir iş metriği ekle (örn. Payment Service'te `payments_success_total`, `payments_failed_total`)
