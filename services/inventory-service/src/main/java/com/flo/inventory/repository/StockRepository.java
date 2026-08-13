@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flo.inventory.model.Stock;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -34,5 +35,9 @@ public class StockRepository {
 
   public Optional<Stock> findById(Long productId) {
     return Optional.ofNullable(stocks.get(productId));
+  }
+
+  public Collection<Stock> findAll() {
+    return stocks.values();
   }
 }
