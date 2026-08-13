@@ -212,9 +212,9 @@ Mimari referans: Mock E-Ticaret Servisleri (Search, Cart, Payment, Inventory) �
 
 ## FAZ 12 — Gün 12: Prometheus Kurulumu ve Metrik Toplama
 
-1. Her mikroservise `/metrics` endpoint'i ekle (prometheus_client / prom-client kütüphanesi ile)
-2. Temel RED metriklerini tanımla: `http_requests_total` (Counter), `http_request_duration_seconds` (Histogram)
-3. Her endpoint için method/path/status_code label'larını doğru şekilde ekle
+1. Her mikroservise `/metrics` endpoint'i ekle (prometheus_client / prom-client kütüphanesi ile) *(Java/Spring Boot mimarisine uyarlandı: `spring-boot-starter-actuator` + `micrometer-registry-prometheus` 4 servise de eklendi, `management.endpoints.web.exposure.include=health,prometheus` ile `/actuator/prometheus` açıldı. 4 servis de `200` dönüyor, doğrulandı — Spring Boot'ta idiyomatik path `/metrics` değil `/actuator/prometheus`)* ✅
+2. Temel RED metriklerini tanımla: `http_requests_total` (Counter), `http_request_duration_seconds` (Histogram) *(Micrometer'ın Spring MVC otomatik enstrümantasyonu `http_server_requests_seconds` metriğini zaten üretiyordu (Counter+Sum+Max) ama gerçek histogram bucket'ları yoktu (Faz 14'teki `histogram_quantile()` p95/p99 panelleri için gerekli); 4 servise `management.metrics.distribution.percentiles-histogram.http.server.requests=true` eklendi, `_bucket{le=...}` satırları doğrulandı. `mvn test` ile tüm paket (29 test) hâlâ yeşil)* ✅
+3. Her endpoint için method/path/status_code label'larını doğru şekilde ekle *(Otomatik geliyor — her `http_server_requests_seconds*` satırında `method`, `uri`, `status` etiketleri doğru şekilde mevcut, doğrulandı)* ✅
 4. Prometheus image'ını docker-compose'a ekle, `prometheus.yml` scrape config dosyasını oluştur
 5. Scrape target olarak 4 servisin `/metrics` endpoint'lerini tanımla (servis adı + port)
 6. Prometheus UI'a (`localhost:9090`) erişip target'ların `UP` durumunda olduğunu doğrula

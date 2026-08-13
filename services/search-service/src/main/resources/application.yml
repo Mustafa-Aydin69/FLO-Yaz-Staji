@@ -7,6 +7,16 @@ spring:
   application:
     name: search-service
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, prometheus
+  metrics:
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+
 otel:
   service:
     name: ${OTEL_SERVICE_NAME:search-service}
