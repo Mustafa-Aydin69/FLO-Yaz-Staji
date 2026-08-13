@@ -325,6 +325,26 @@ Projenin 20 günlük, gün gün ilerleyen detaylı faz planı için [`FAZLAR.md`
 - Uçtan uca bir sipariş akışı (cart oluştur → ürün ekle → ödeme yap) tetiklenip Collector logları incelendi: **trace propagation her kök istek içinde doğru çalışıyor**, ama mimaride "sipariş" tek bir HTTP isteği olmadığından (3 bağımsız kök istek: `POST /cart`, `POST /cart/{id}/items`, `POST /payment`) tek bir trace_id 4 servisin tamamını kapsamıyor — bunun yerine her kök isteğin kendi trace_id'si, o istek içindeki tüm alt-çağrılarda (örn. ürün ekle → cart+search, ödeme → payment+cart+inventory) tutarlı şekilde taşınıyor; kopma tespit edilmedi
 - Collector image'ı (`otel/opentelemetry-collector-contrib`) distroless olduğundan (konteynerde `sh`/`wget`/`curl` yok) diğer servislerdeki gibi Docker-native healthcheck kurulamadı; bunun yerine resmi `health_check` extension'ı eklenip `curl http://localhost:13133/` ile `200 OK` doğrulandı — `depends_on` bu servis için `service_started` olarak kaldı
 
+### Gün 11 Durumu — Trace Görselleştirme: Jaeger Kullanımı
+
+```
+[ OTel Collector ] --OTLP/gRPC (4317)--> [ Jaeger all-in-one ]
+                                                |  storage: memory (MaxTraces: 10000)
+                                                |  UI: localhost:16686
+                                                v
+                                   Search / Filter / Trace Timeline
+```
+
+- `jaegertracing/all-in-one:1.65.0` docker-compose'a eklendi (OTLP receiver aktif, UI portu `16686`); Collector'ın `otlp/jaeger` exporter'ı bu servise `jaeger:4317` üzerinden trace gönderiyor
+- **Jaeger UI'a erişim:** `docker compose up` sonrası `http://localhost:16686` — Search sekmesinde servis adı (5 servis: 4 mikroservis + `jaeger-all-in-one`), operasyon, tag ve süre filtreleriyle trace aranabiliyor; üst sağdaki "Lookup by Trace ID" kutusuyla doğrudan `trace_id` ile arama yapılabiliyor
+- Uçtan uca bir ödeme akışı (`POST /payment`) Jaeger'da 3 servisi (payment-service, cart-service, inventory-service) tek trace timeline'ında gösteriyor: `POST /payment` → `GET /cart/{cartId}` (cart-service) → `POST /inventory/{productId}/reserve` (inventory-service) → `reserve-stock` → `bank-charge`; `search-service` yalnızca ayrı bir kök istek olan "ürün ekle" trace'inde görünüyor (bkz. Gün 10 notu — "sipariş" tek bir HTTP isteği değil, 3 bağımsız kök istekten oluşuyor)
+- Span süre analizi: `payment-service`'in `bank-charge` span'i (banka API simülasyonu) trace toplam süresinin ~%96'sını oluşturuyor — en büyük darboğaz burada
+- Kasıtlı bir test için `BankApiClient`'taki simüle gecikme geçici olarak 300ms→3500ms yapıldı, Jaeger'da `bank-charge` span'inin 3500ms olarak net göründüğü doğrulandı, sonra geri alındı
+- Hata senaryosu (stok yetersizliği, `409 Conflict`) tetiklendiğinde `reserve-stock` ve onu saran `payment-service` client span'i Jaeger UI'da kırmızı hata ikonuyla (`otel.status_code=ERROR`, exception log'u ile) işaretleniyor
+- Jaeger varsayılan olarak in-memory storage kullanıyor; `MEMORY_MAX_TRACES=10000` ile bellek kullanımı sınırlandı (zaman-bazlı retention yerine trace-sayısı bazlı eviction)
+
+> _Ekran görüntüsü placeholder'ı: Jaeger UI'da `POST /payment` trace timeline görünümü (3 servis, 7 span) — `docs/screenshots/gun11-jaeger-trace.png`_
+
 ## Sınırlamalar
 
 - Servisler arası veri gerçek bir veritabanı yerine mock/in-memory veri ile simüle edilir

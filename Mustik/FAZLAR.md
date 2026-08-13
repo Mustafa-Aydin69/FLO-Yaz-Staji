@@ -205,7 +205,7 @@ Mimari referans: Mock E-Ticaret Servisleri (Search, Cart, Payment, Inventory) �
 8. Hata senaryosunda (stok yok) span'in Jaeger UI'da kırmızı/error olarak işaretlendiğini doğrula *(Stok=0 olan ürün (id=4) ile ödeme denenip 409 Conflict tetiklendi; `reserve-stock` (inventory-service) ve onu saran `payment-service POST` client span'i `otel.status_code=ERROR` ile işaretlendi, exception log'u ("409 CONFLICT Insufficient stock for product: 4") kayıtlı. Jaeger UI'da her iki span'in solunda kırmızı hata ikonu görsel olarak da doğrulandı)* ✅
 9. Trace arama filtrelerini (servis adı, süre, hata durumu) dene *(Servis adı filtresi (payment-service) önceki maddelerde defalarca kullanıldı; `tags={"error":"true"}` + `minDuration=10ms` kombinasyonu denendi — 20+ health-check trace'i arasından tam olarak stok hatası trace'ine (81aa802, "2 Errors") indi, filtreler doğru çalışıyor)* ✅
 10. Jaeger/Tempo veri saklama (retention) ayarlarını gözden geçir, geliştirme için makul bir değer belirle *(Jaeger varsayılan olarak in-memory storage kullanıyor, `MaxTraces: 0` (sınırsız) — zaman-bazlı retention yok, sadece trace-sayısı bazlı eviction var. `docker-compose.yml`'e `MEMORY_MAX_TRACES=10000` eklendi, restart sonrası doğrulandı; bu, uzun süre açık kalan dev ortamında bellek büyümesini sınırlıyor)* ✅
-11. README'ye "Trace görselleştirme — Jaeger kullanımı" bölümü ekle, örnek ekran görüntüsü placeholder'ı koy
+11. README'ye "Trace görselleştirme — Jaeger kullanımı" bölümü ekle, örnek ekran görüntüsü placeholder'ı koy *(README'ye "Gün 11 Durumu" bölümü eklendi: veri akışı diyagramı, UI erişimi/filtreler, propagation/span-süre/hata/retention bulguları ve ekran görüntüsü placeholder'ı)* ✅
 12. Git commit, milestone (`v0.3-tracing-visualized`)
 
 ---
