@@ -218,8 +218,8 @@ Mimari referans: Mock E-Ticaret Servisleri (Search, Cart, Payment, Inventory) �
 4. Prometheus image'ını docker-compose'a ekle, `prometheus.yml` scrape config dosyasını oluştur *(`prom/prometheus:v2.55.1` docker-compose'a eklendi, `infra/prometheus.yml` oluşturuldu — 10s scrape interval)* ✅
 5. Scrape target olarak 4 servisin `/metrics` endpoint'lerini tanımla (servis adı + port) *(4 job tanımlandı, `metrics_path: /actuator/prometheus`, container adı+port ile: `search-service:8081`, `cart-service:8082`, `payment-service:8083`, `inventory-service:8084`)* ✅
 6. Prometheus UI'a (`localhost:9090`) erişip target'ların `UP` durumunda olduğunu doğrula *(`/api/v1/targets` ile doğrulandı — kısa bir "unknown" (ilk scrape öncesi) sonrası 4 target'ın da `health:"up"` olduğu görüldü)* ✅
-7. Basit bir PromQL sorgusu çalıştır (örn. `rate(http_requests_total[1m])`)
-8. Servislere birkaç manuel istek atıp metriklerin arttığını Prometheus'ta gözlemle
+7. Basit bir PromQL sorgusu çalıştır (örn. `rate(http_requests_total[1m])`) *(`rate(http_server_requests_seconds_count[1m])` çalıştırıldı, 4 servisten method/uri/status etiketli gerçek zamanlı rate değerleri döndü)* ✅
+8. Servislere birkaç manuel istek atıp metriklerin arttığını Prometheus'ta gözlemle *(`GET /search?q=nike` 10 kez atıldı, öncesi/sonrası karşılaştırıldı: `http_server_requests_seconds_count{uri="/search",status="200"}` tam olarak 10'a çıktığı doğrulandı)* ✅
 9. Custom bir iş metriği ekle (örn. Payment Service'te `payments_success_total`, `payments_failed_total`)
 10. Inventory Service'te `stock_level` gauge metriği ekle
 11. Prometheus scrape interval'ını (örn. 5s-15s) değerlendir ve ayarla
