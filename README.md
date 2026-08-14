@@ -114,6 +114,9 @@ FLO-Yaz-Staji/
    | Cart Service | http://localhost:8082/health |
    | Payment Service | http://localhost:8083/health |
    | Inventory Service | http://localhost:8084/health |
+   | Jaeger UI | http://localhost:16686 |
+   | Prometheus UI | http://localhost:9090 |
+   | Grafana | http://localhost:3000 (`admin` / `.env`'deki `GRAFANA_ADMIN_PASSWORD`, varsayılan `changeme`) |
 
    Detaylı endpoint listesi için aşağıdaki [API Dokümantasyonu](#api-dokümantasyonu) bölümüne bakabilirsin.
 5. *(Opsiyonel)* Tüm zinciri (arama → sepet → ödeme → stok) otomatik doğrulamak için:
@@ -126,7 +129,7 @@ FLO-Yaz-Staji/
    docker compose -f infra/docker-compose.yml down
    ```
 
-> **Not:** Jaeger, Prometheus, Grafana ve Alertmanager arayüzleri bu fazda henüz mevcut değil — bunlar Faz 8'den itibaren eklenecek (bkz. [Geliştirme Planı](FAZLAR.md)).
+> **Not:** Alertmanager arayüzü bu fazda henüz mevcut değil — Faz 19'da eklenecek (bkz. [Geliştirme Planı](FAZLAR.md)).
 
 ## API Dokümantasyonu
 
@@ -359,6 +362,21 @@ Projenin 20 günlük, gün gün ilerleyen detaylı faz planı için [`FAZLAR.md`
 - `prom/prometheus:v2.55.1` docker-compose'a eklendi, `infra/prometheus.yml`'de 4 servis için scrape job'ı tanımlandı (10s interval, container adı+port ile), tüm target'lar `UP`
 - Custom iş metrikleri: Payment Service'te `payments_success_total`/`payments_failed_total` (başarı/stok yetersizliği/sıfır-tutar senaryolarında artıyor), Inventory Service'te ürün başına canlı `stock_level{product_id=...}` gauge'i (`stockCount - reservedCount`)
 - PromQL ile doğrulandı: `rate(http_server_requests_seconds_count[1m])` gerçek zamanlı sonuç döndürüyor; manuel isteklerle sayaçların arttığı (`/search` → count=10) ve gauge'in canlı güncellendiği (reserve/release ile 42→41→42) doğrulandı
+
+### Gün 13 Durumu — Dashboard: Grafana Kurulumu ve Veri Kaynağı Bağlantısı
+
+```
+[ Prometheus :9090 ]  <--datasource-->  [ Grafana :3000 ]  --> "FLO Genel Bakis" dashboard
+[ Jaeger :16686     ]  <--datasource-->
+                                          (datasources + dashboard: provisioning/*.yaml + dashboards/*.json)
+```
+
+- `grafana/grafana:11.3.1` docker-compose'a eklendi (`GRAFANA_PORT`, varsayılan `3000`)
+- Admin kimlik bilgileri `.env` üzerinden parametrize edildi (`GRAFANA_ADMIN_USER`/`GRAFANA_ADMIN_PASSWORD`), varsayılan artık `admin`/`admin` değil — `admin`/`changeme`
+- Prometheus ve Jaeger veri kaynakları `infra/grafana/provisioning/datasources/datasources.yaml` ile sabit `uid` (`prometheus`, `jaeger`) üzerinden koddan tanımlandı, UI'dan manuel ekleme gerekmiyor
+- "FLO Genel Bakis" dashboard'ı `infra/grafana/dashboards/flo-genel-bakis.json` olarak versiyonlandı: toplam istek sayısı paneli (`sum(http_server_requests_seconds_count)`) ve `service` değişkenine (`label_values(job)`) bağlı servis bazlı istek hızı paneli (`sum(rate(http_server_requests_seconds_count{job="$service"}[5m]))`)
+- Kalıcılık testi: Grafana container'ı tamamen kaldırılıp sıfırdan yeniden oluşturuldu (kalıcı veri volume'u yok) — hem veri kaynakları hem dashboard, provisioning sayesinde hiçbir manuel müdahale olmadan otomatik geri geldi
+- Zaman aralığı değişimi ve 5s auto-refresh, canlı trafik üretilerek doğrulandı
 
 ## Sınırlamalar
 
