@@ -167,6 +167,8 @@ services:
 
   grafana:
     image: grafana/grafana:11.3.1
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
     ports:
       - "${GRAFANA_PORT:-3000}:3000"
     networks:
