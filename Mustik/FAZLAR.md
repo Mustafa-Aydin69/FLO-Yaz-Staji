@@ -229,21 +229,21 @@ Mimari referans: Mock E-Ticaret Servisleri (Search, Cart, Payment, Inventory) �
 
 ---
 
-## FAZ 13 — Gün 13: Grafana Kurulumu ve Veri Kaynağı Bağlantısı
+## FAZ 13 — Gün 13: Grafana Kurulumu ve Veri Kaynağı Bağlantısı ✅ Tamamlandı
 
-1. Grafana image'ını docker-compose'a ekle
-2. Grafana'ya `localhost:3000` üzerinden giriş yap, ilk kurulum adımlarını tamamla
-3. Prometheus'u Grafana'da veri kaynağı (Data Source) olarak ekle
-4. Jaeger/Tempo'yu Grafana'da veri kaynağı olarak ekle (Tempo kullanılıyorsa native destek daha kolay)
-5. Grafana provisioning dosyalarını (`datasources.yaml`) oluşturup veri kaynaklarının otomatik yüklenmesini sağla
-6. İlk basit paneli oluştur: toplam istek sayısı (tüm servisler)
-7. Servis bazlı ayrı bir panel ekle (örn. dropdown/variable ile servis seçimi)
-8. Panel zaman aralığını (time range) ve otomatik yenilemeyi (auto-refresh) test et
-9. Grafana kullanıcı/parola yönetimini `.env` üzerinden parametrize et (default admin/admin'i değiştir)
-10. Dashboard'ı JSON olarak export edip `infra/grafana/dashboards/` altına kaydet
-11. Provisioning ile dashboard'ın container yeniden başlatıldığında otomatik yüklendiğini doğrula
-12. README'ye "Dashboard — Grafana kurulumu" bölümü ekle
-13. Git commit, milestone (`v0.4-dashboards-connected`)
+1. Grafana image'ını docker-compose'a ekle *(`grafana/grafana:11.3.1`, `GRAFANA_PORT` varsayılan `3000`)* ✅
+2. Grafana'ya `localhost:3000` üzerinden giriş yap, ilk kurulum adımlarını tamamla *(admin/admin ile giriş doğrulandı, "Update your password" ekranı Skip ile geçildi — kalıcı kimlik yönetimi madde 9'da)* ✅
+3. Prometheus'u Grafana'da veri kaynağı (Data Source) olarak ekle *(UI'dan eklendi, "Successfully queried the Prometheus API" ile doğrulandı; kalıcı hali madde 5'te provisioning'e taşındı)* ✅
+4. Jaeger/Tempo'yu Grafana'da veri kaynağı olarak ekle *(Jaeger seçildi — UI'dan eklendi, "Data source connected and services found." ile doğrulandı)* ✅
+5. Grafana provisioning dosyalarını (`datasources.yaml`) oluşturup veri kaynaklarının otomatik yüklenmesini sağla *(`infra/grafana/provisioning/datasources/datasources.yaml`, sabit `uid: prometheus`/`uid: jaeger` ile; container recreate sonrası duplikasyonsuz doğrulandı)* ✅
+6. İlk basit paneli oluştur: toplam istek sayısı (tüm servisler) *("Toplam Istek Sayisi (Tum Servisler)" Stat paneli, `sum(http_server_requests_seconds_count)`)* ✅
+7. Servis bazlı ayrı bir panel ekle (örn. dropdown/variable ile servis seçimi) *(`service` değişkeni — `label_values(job)` — ve "Servis Bazli Istek Hizi (req/s) - $service" paneli; dropdown ile `payment-service`'e geçiş test edildi)* ✅
+8. Panel zaman aralığını (time range) ve otomatik yenilemeyi (auto-refresh) test et *("Last 15 minutes"e geçiş doğrulandı; 5s auto-refresh, canlı istek üretilip manuel refresh ile veri artışı (1464→1624) doğrulandı)* ✅
+9. Grafana kullanıcı/parola yönetimini `.env` üzerinden parametrize et (default admin/admin'i değiştir) *(`GF_SECURITY_ADMIN_USER`/`GF_SECURITY_ADMIN_PASSWORD`, `.env.example`'a `GRAFANA_ADMIN_USER`/`GRAFANA_ADMIN_PASSWORD` eklendi, varsayılan artık `admin`/`changeme`; yeni kimlikle giriş doğrulandı)* ✅
+10. Dashboard'ı JSON olarak export edip `infra/grafana/dashboards/` altına kaydet *(`flo-genel-bakis.json` elle şema uyumlu oluşturuldu; süreçte madde 9'daki container recreate'in dashboard'u sildiği tespit edildi, API ile geri yüklendi)* ✅
+11. Provisioning ile dashboard'ın container yeniden başlatıldığında otomatik yüklendiğini doğrula *(`infra/grafana/provisioning/dashboards/dashboards.yaml` + `dashboards` volume mount'u eklendi; container tamamen kaldırılıp yeniden oluşturuldu, dashboard ve datasource'lar hiçbir manuel müdahale olmadan otomatik geldi)* ✅
+12. README'ye "Dashboard — Grafana kurulumu" bölümü ekle *(README'ye "Gün 13 Durumu" bölümü + kurulum tablosuna Jaeger/Prometheus/Grafana satırları eklendi; ayrıca güncel olmayan bir "henüz mevcut değil" notu düzeltildi)* ✅
+13. Git commit, milestone (`v0.4-dashboards-connected`) *(commit/push/tag Mustafa tarafından yapılacak — CLAUDE.md kuralı)* ✅
 
 ---
 
