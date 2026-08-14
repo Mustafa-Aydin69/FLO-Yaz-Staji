@@ -167,6 +167,9 @@ services:
 
   grafana:
     image: grafana/grafana:11.3.1
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-changeme}
     volumes:
       - ./grafana/provisioning:/etc/grafana/provisioning:ro
     ports:
