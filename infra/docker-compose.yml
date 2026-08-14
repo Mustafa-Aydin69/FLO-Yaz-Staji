@@ -164,3 +164,18 @@ services:
         limits:
           cpus: "0.5"
           memory: 512M
+
+  grafana:
+    image: grafana/grafana:11.3.1
+    ports:
+      - "${GRAFANA_PORT:-3000}:3000"
+    networks:
+      - flo-network
+    depends_on:
+      - prometheus
+      - jaeger
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
